@@ -1,0 +1,2222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>CodeQuiz IA | Aprende programación</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #20213a;
+      --muted: #777b91;
+      --purple: #6558d3;
+      --purple-dark: #5145bb;
+      --purple-light: #eeecff;
+      --surface: #fff;
+      --canvas: #f6f7fb;
+      --line: #e9eaf1;
+      --green: #18845b;
+      --green-light: #e8f7f0;
+      --red: #c64f58;
+      --red-light: #fff0f0;
+      --shadow: 0 18px 50px rgba(38, 39, 75, .07);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .app-shell { min-height: 100vh; }
+    .topbar {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(20px, 5vw, 76px);
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: -.04em; }
+    .brand-mark {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      color: white;
+      background: linear-gradient(145deg, #8175ed, #574abf);
+      border-radius: 13px;
+      box-shadow: 0 7px 15px #6558d333;
+      font-size: 19px;
+    }
+    .brand-name { font-size: 19px; }
+    .brand-name span { color: var(--purple); }
+    .topbar-right { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+    .avatar {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      color: var(--purple-dark);
+      background: var(--purple-light);
+      border-radius: 50%;
+      font-weight: 750;
+    }
+
+    .layout {
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 64px;
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 30px;
+    }
+
+    .sidebar { padding-top: 8px; }
+    .side-label {
+      margin: 0 0 12px 12px;
+      color: #a1a3b2;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .side-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 12px 14px;
+      margin: 4px 0;
+      color: #73768a;
+      background: transparent;
+      border: 0;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 650;
+      text-align: left;
+      transition: color .15s, background .15s, transform .15s;
+    }
+    .side-link:hover { color: var(--purple-dark); background: var(--purple-light); transform: translateX(2px); }
+    .side-link.active { color: var(--purple-dark); background: var(--purple-light); }
+    .side-icon { width: 20px; text-align: center; font-size: 16px; }
+    .sidebar-note {
+      margin-top: 32px;
+      padding: 17px;
+      background: linear-gradient(145deg, #f0eeff, #faf9ff);
+      border: 1px solid #e8e5ff;
+      border-radius: 15px;
+    }
+    .sidebar-note strong { display: block; margin-bottom: 5px; font-size: 13px; }
+    .sidebar-note p { margin: 0; color: var(--muted); font-size: 12px; }
+
+    main { min-width: 0; }
+    .page-heading { margin: 0 0 23px; }
+    .eyebrow { color: var(--purple); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 5px 0 4px; font-size: clamp(25px, 3vw, 34px); letter-spacing: -.045em; line-height: 1.2; }
+    .page-heading p { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+
+    .status-banner {
+      margin: 0 0 16px;
+      padding: 10px 14px;
+      color: #794c00;
+      background: #fff7df;
+      border: 1px solid #f5e2a9;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+    .status-banner[hidden] { display: none; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .intro-card { overflow: hidden; }
+    .intro-banner {
+      position: relative;
+      min-height: 192px;
+      padding: 29px 32px;
+      overflow: hidden;
+      color: white;
+      background: linear-gradient(112deg, #574abd 0%, #7669e2 57%, #9688f0 100%);
+    }
+    .intro-banner::after, .intro-banner::before {
+      position: absolute;
+      content: "";
+      border: 1px solid #ffffff25;
+      border-radius: 50%;
+    }
+    .intro-banner::before { width: 235px; height: 235px; right: 8%; top: -110px; }
+    .intro-banner::after { width: 175px; height: 175px; right: -8px; bottom: -105px; }
+    .banner-copy { position: relative; z-index: 1; max-width: 540px; }
+    .banner-tag { display: inline-block; padding: 5px 9px; background: #ffffff24; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .intro-banner h2 { margin: 14px 0 5px; font-size: 24px; letter-spacing: -.035em; }
+    .intro-banner p { max-width: 475px; margin: 0; color: #eeecff; font-size: 13px; }
+    .sparkle { position: absolute; right: 13%; top: 46px; z-index: 1; font-size: 38px; opacity: .9; }
+
+    .intro-content { display: grid; grid-template-columns: 1fr 230px; gap: 28px; padding: 27px 30px 30px; }
+    .intro-content h3 { margin: 0 0 7px; font-size: 16px; }
+    .intro-content .subcopy { margin: 0 0 19px; color: var(--muted); font-size: 13px; }
+    .field-label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 750; }
+    select {
+      width: 100%;
+      padding: 11px 37px 11px 12px;
+      color: var(--ink);
+      background: white;
+      border: 1px solid #dfe0e9;
+      border-radius: 10px;
+      outline: none;
+    }
+    select:focus-visible, button:focus-visible { outline: 3px solid #a9a1ff; outline-offset: 2px; }
+    .primary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 43px;
+      padding: 0 18px;
+      color: white;
+      background: var(--purple);
+      border: 0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 750;
+      transition: background .15s, transform .15s;
+    }
+    .primary-button:hover { background: var(--purple-dark); transform: translateY(-1px); }
+    .secondary-button {
+      min-height: 42px;
+      padding: 0 16px;
+      color: var(--purple-dark);
+      background: white;
+      border: 1px solid #dcd9fa;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    .secondary-button:hover { background: #f8f7ff; }
+    .full-width { width: 100%; margin-top: 14px; }
+    .quiz-aside {
+      align-self: stretch;
+      padding: 17px;
+      background: #f8f8fc;
+      border: 1px solid #eeeeF4;
+      border-radius: 13px;
+    }
+    .aside-label { color: var(--muted); font-size: 11px; }
+    .aside-value { margin: 4px 0 12px; font-size: 18px; font-weight: 800; }
+    .aside-divider { height: 1px; margin: 12px 0; background: var(--line); }
+    .aside-caption { color: var(--muted); font-size: 11px; line-height: 1.55; }
+
+    .below-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; margin-top: 18px; }
+    .small-card { padding: 20px; }
+    .small-card h3 { margin: 0 0 4px; font-size: 14px; }
+    .small-card > p { margin: 0; color: var(--muted); font-size: 12px; }
+    .topic-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 17px; }
+    .topic {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px;
+      background: #fafaff;
+      border: 1px solid #f0eff9;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .topic-icon { display: grid; width: 28px; height: 28px; place-items: center; background: var(--purple-light); border-radius: 8px; }
+    .last-result { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 17px; }
+    .last-result strong { font-size: 22px; }
+    .last-result span { display: block; color: var(--muted); font-size: 11px; }
+    .mini-ring {
+      display: grid;
+      width: 54px;
+      height: 54px;
+      place-items: center;
+      color: var(--purple-dark);
+      background: conic-gradient(var(--purple) var(--progress, 0%), #eeedf5 0);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .mini-ring::before { content: ""; position: absolute; width: 42px; height: 42px; background: white; border-radius: 50%; }
+    .mini-ring span { position: relative; z-index: 1; color: var(--ink); }
+
+    .quiz-card { padding: 25px 28px 28px; }
+    .quiz-topline { display: flex; justify-content: space-between; gap: 15px; color: var(--muted); font-size: 12px; }
+    .topic-pill { padding: 5px 9px; color: var(--purple-dark); background: var(--purple-light); border-radius: 20px; font-weight: 750; }
+    .progress-track { height: 7px; margin: 16px 0 24px; overflow: hidden; background: #efeff5; border-radius: 20px; }
+    .progress-fill { width: 0; height: 100%; background: linear-gradient(90deg, #6659d6, #978af1); border-radius: inherit; transition: width .25s; }
+    .question-level { margin: 0 0 8px; color: var(--purple); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .lesson-intro {
+      margin: 0 0 19px;
+      padding: 14px 16px;
+      background: #f6f5ff;
+      border: 1px solid #e8e5ff;
+      border-left: 3px solid var(--purple);
+      border-radius: 10px;
+    }
+    .lesson-intro strong { display: block; margin-bottom: 4px; color: var(--purple-dark); font-size: 12px; }
+    .lesson-intro p { margin: 0; color: #62647a; font-size: 13px; line-height: 1.6; }
+    .question-title { margin: 0 0 18px; font-size: clamp(19px, 2.4vw, 24px); letter-spacing: -.025em; line-height: 1.35; }
+    pre {
+      margin: 0 0 18px;
+      padding: 16px;
+      overflow-x: auto;
+      color: #e8e7ff;
+      background: #25243d;
+      border-radius: 11px;
+      font: 13px/1.7 "Cascadia Code", Consolas, monospace;
+      white-space: pre-wrap;
+    }
+    .options { display: grid; gap: 10px; }
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      width: 100%;
+      padding: 13px 14px;
+      color: var(--ink);
+      text-align: left;
+      background: white;
+      border: 1px solid #e7e8ef;
+      border-radius: 11px;
+      transition: border-color .15s, background .15s;
+    }
+    .option:hover:not(:disabled) { background: #faf9ff; border-color: #b9b2f4; }
+    .option:disabled { cursor: default; }
+    .option-letter {
+      display: grid;
+      flex: 0 0 25px;
+      width: 25px;
+      height: 25px;
+      place-items: center;
+      color: #6e7184;
+      background: #f1f1f6;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .option-copy { padding-top: 2px; font-size: 13px; }
+    .option.correct { color: #176b4c; background: var(--green-light); border-color: #94d7b9; }
+    .option.correct .option-letter { color: white; background: var(--green); }
+    .option.incorrect { color: #a43c46; background: var(--red-light); border-color: #e4a1a5; }
+    .option.incorrect .option-letter { color: white; background: var(--red); }
+    .quiz-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
+    .hint { color: var(--muted); font-size: 11px; }
+    .feedback {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 12px;
+      animation: appear .2s ease-out;
+    }
+    .feedback.good { color: #245f49; background: #effaf4; border: 1px solid #cdebdc; }
+    .feedback.needs-work { color: #74464a; background: #fff5f3; border: 1px solid #f3d6d1; }
+    .feedback h3 { margin: 0 0 5px; font-size: 14px; }
+    .feedback p { margin: 5px 0 0; font-size: 13px; }
+    .feedback .next-step { font-size: 12px; }
+    .feedback[hidden] { display: none; }
+
+    .result-card { padding: 28px; }
+    .result-header { display: flex; align-items: center; gap: 21px; padding-bottom: 23px; border-bottom: 1px solid var(--line); }
+    .score-ring {
+      display: grid;
+      flex: 0 0 92px;
+      width: 92px;
+      height: 92px;
+      place-items: center;
+      background: conic-gradient(var(--purple) var(--score, 0%), #eeedf5 0);
+      border-radius: 50%;
+    }
+    .score-ring-inner { display: grid; width: 72px; height: 72px; place-content: center; text-align: center; background: white; border-radius: 50%; }
+    .score-ring-inner strong { font-size: 23px; line-height: 1.1; }
+    .score-ring-inner span { color: var(--muted); font-size: 10px; }
+    .result-header h2 { margin: 0 0 4px; font-size: 22px; letter-spacing: -.03em; }
+    .result-header p { margin: 0; color: var(--muted); font-size: 13px; }
+    .result-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 21px 0; }
+    .result-panel { padding: 16px; background: #f9f9fc; border: 1px solid #eeeef4; border-radius: 12px; }
+    .result-panel h3 { margin: 0 0 11px; font-size: 13px; }
+    .result-panel p { margin: 0; color: #64677b; font-size: 12px; }
+    .weak-list { display: grid; gap: 8px; }
+    .weak-item { display: flex; justify-content: space-between; gap: 10px; color: #55586c; font-size: 12px; }
+    .weak-item strong { color: var(--red); font-size: 11px; }
+    .result-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .empty-weak { color: var(--green) !important; }
+    .home-view, .progress-view { display: grid; gap: 18px; }
+    .home-welcome { padding: 26px; }
+    .home-welcome h2, .progress-view h2 { margin: 4px 0 6px; color: #ef9fae; font-size: 23px; }
+    .home-welcome p, .progress-view > p { margin: 0; color: var(--muted); font-size: 13px; }
+    .home-welcome .primary-button { margin-top: 18px; }
+    .progress-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .progress-stat { padding: 17px; }
+    .progress-stat span { display: block; color: var(--muted); font-size: 11px; }
+    .progress-stat strong { display: block; margin-top: 5px; color: #ef9fae; font-size: 23px; }
+    .progress-panel { padding: 20px; }
+    .progress-panel h3 { margin: 0 0 13px; color: #ef9fae; font-size: 14px; }
+    .progress-topic-list, .attempt-list { display: grid; gap: 10px; }
+    .progress-topic { display: grid; grid-template-columns: minmax(90px, .6fr) 1fr auto; align-items: center; gap: 12px; font-size: 12px; }
+    .topic-progress-track { height: 8px; overflow: hidden; background: #4b3b25; border-radius: 20px; }
+    .topic-progress-fill { height: 100%; background: #aaa639; border-radius: inherit; }
+    .progress-topic strong { color: #ffdfaa; font-size: 11px; }
+    .attempt-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; background: #29251f; border: 1px solid #4b3b25; border-radius: 10px; font-size: 12px; }
+    .attempt-item span { color: var(--muted); }
+    .attempt-item strong { color: #ef9fae; }
+    .progress-empty { padding: 18px; color: var(--muted); background: #29251f; border: 1px dashed #66512e; border-radius: 10px; font-size: 13px; }
+    .learning-content { display: grid; gap: 16px; }
+    .learning-card, .resource-card { padding: 21px; }
+    .learning-card h2, .resource-card h2 { margin: 0 0 7px; color: #ef9fae; font-size: 18px; }
+    .learning-card h3 { margin: 16px 0 6px; color: #ffdfaa; font-size: 14px; }
+    .learning-card p, .resource-card p { margin: 0; color: #e4d9c8; font-size: 13px; line-height: 1.7; }
+    .learning-card pre { margin: 12px 0 0; }
+    .learning-tip { margin-top: 12px !important; padding: 10px 12px; color: #ffdfaa !important; background: #2e271c; border-left: 3px solid #aaa639; border-radius: 7px; }
+    .resource-intro { margin-bottom: 17px !important; }
+    .resource-list { display: grid; gap: 10px; }
+    .resource-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px;
+      color: #f5f0e8;
+      background: #29251f;
+      border: 1px solid #4b3b25;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: border-color .15s, background .15s;
+    }
+    .resource-link:hover { background: #3a301f; border-color: #aaa639; }
+    .resource-link strong { display: block; margin-bottom: 3px; color: #ffdfaa; font-size: 13px; }
+    .resource-link span { display: block; color: #d4c9b7; font-size: 11px; line-height: 1.5; }
+    .resource-link .external-icon { flex: 0 0 auto; color: #d4d16a; font-size: 17px; }
+    .hidden { display: none !important; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    @keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 820px) {
+      .layout { grid-template-columns: 1fr; gap: 18px; margin-top: 25px; }
+      .sidebar { display: flex; align-items: center; gap: 7px; padding: 0; overflow-x: auto; }
+      .side-label, .sidebar-note { display: none; }
+      .side-link { flex: 0 0 auto; margin: 0; padding: 10px 12px; }
+      .below-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .topbar { height: 65px; padding: 0 17px; }
+      .topbar-right > span { display: none; }
+      .layout { width: calc(100% - 28px); margin: 21px auto 40px; }
+      .intro-banner { min-height: 180px; padding: 23px 20px; }
+      .sparkle { right: 7%; top: 25px; font-size: 28px; }
+      .intro-content { grid-template-columns: 1fr; gap: 17px; padding: 21px 19px; }
+      .quiz-aside { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+      .aside-divider { display: none; }
+      .aside-caption { grid-column: 1 / -1; }
+      .below-grid, .result-body { grid-template-columns: 1fr; }
+      .quiz-card, .result-card { padding: 20px 17px; }
+      .quiz-footer { align-items: flex-end; }
+      .hint { max-width: 150px; }
+      .result-header { align-items: flex-start; gap: 14px; }
+      .score-ring { flex-basis: 76px; width: 76px; height: 76px; }
+      .score-ring-inner { width: 60px; height: 60px; }
+      .score-ring-inner strong { font-size: 19px; }
+    }
+
+    :root {
+      color-scheme: dark;
+      --ink: #f5f0e8;
+      --muted: #d4c9b7;
+      --purple: #aaa639;
+      --purple-dark: #d4d16a;
+      --purple-light: #3d311f;
+      --surface: #222;
+      --canvas: #1a1a1a;
+      --line: #4b3b25;
+      --green: #aaa639;
+      --green-light: #33351e;
+      --red: #ef9fae;
+      --red-light: #3d2024;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .24);
+    }
+
+    body { color: var(--ink); background: var(--canvas); }
+    .topbar { background: #222; border-color: var(--line); }
+    .brand-mark { color: #1a1a1a; background: linear-gradient(145deg, #d4d16a, #aaa639); box-shadow: 0 7px 15px #aaa63933; }
+    .brand-name span, .eyebrow, .question-level { color: #ef9fae; }
+    .avatar { color: #1a1a1a; background: #d4d16a; }
+    .side-label { color: #d4ad6a; }
+    .side-link { color: #f5f0e8; }
+    .side-link.active { color: #1a1a1a; background: #aaa639; }
+    .sidebar-note { background: linear-gradient(145deg, #553500, #3b260a); border-color: #79531f; }
+    .sidebar-note strong, .small-card h3, .intro-content h3, .result-panel h3 { color: #ef9fae; }
+    .page-heading h1, .intro-banner h2, .question-title, .result-header h2 { color: #ef9fae; }
+    .page-heading p, .intro-content .subcopy, .small-card > p, .aside-caption,
+    .aside-label, .result-header p, .quiz-topline, .hint { color: #d8cdbb; }
+    .status-banner { color: #ffdfaa; background: #3d311f; border-color: #80632e; }
+    .card { background: #222; border-color: var(--line); }
+    .intro-banner { color: #f5f0e8; background: linear-gradient(112deg, #553500, #3c270b 68%, #292015); }
+    .intro-banner p { color: #f5e7d2; }
+    .banner-tag { color: #ffdfaa; background: #ffffff1a; }
+    .sparkle { color: #d4d16a; }
+    .quiz-aside, .result-panel { background: #29251f; border-color: #4b3b25; }
+    select { color: #f5f0e8; background: #29251f; border-color: #66512e; }
+    select option { color: #f5f0e8; background: #29251f; }
+    select:focus-visible, button:focus-visible { outline-color: #d4d16a; }
+    .primary-button { color: #1a1a1a; background: #aaa639; }
+    .primary-button:hover { color: #1a1a1a; background: #d4d16a; }
+    .secondary-button { color: #ffdfaa; background: #29251f; border-color: #80632e; }
+    .secondary-button:hover { background: #3d311f; }
+    .topic { color: #f5f0e8; background: #29251f; border-color: #4b3b25; }
+    .topic-icon { color: #ffdfaa; background: #3d311f; }
+    .mini-ring { color: #1a1a1a; background: conic-gradient(#aaa639 var(--progress, 0%), #4b3b25 0); }
+    .mini-ring::before { background: #222; }
+    .mini-ring span, .last-result strong { color: #ef9fae; }
+    .topic-pill { color: #ffdfaa; background: #3d311f; }
+    .progress-track { background: #4b3b25; }
+    .progress-fill { background: linear-gradient(90deg, #aaa639, #d4d16a); }
+    .lesson-intro { background: #2e271c; border-color: #5d4827; border-left-color: #d4d16a; }
+    .lesson-intro strong { color: #ffdfaa; }
+    .lesson-intro p, .result-panel p { color: #e4d9c8; }
+    pre { color: #f5e7d2; background: #171717; border: 1px solid #4b3b25; }
+    .option { color: #f5f0e8; background: #29251f; border-color: #51432e; }
+    .option:hover:not(:disabled) { background: #3a301f; border-color: #aaa639; }
+    .option-letter { color: #f5f0e8; background: #453a29; }
+    .option.correct { color: #f5f0e8; background: #29301f; border-color: #aaa639; }
+    .option.correct .option-letter { color: #1a1a1a; background: #aaa639; }
+    .option.incorrect { color: #ffe3e8; background: #3d2024; border-color: #a95965; }
+    .option.incorrect .option-letter { color: #1a1a1a; background: #ef9fae; }
+    .feedback.good { color: #f5f0e8; background: #29301f; border-color: #69662d; }
+    .feedback.needs-work { color: #ffe3e8; background: #3d2024; border-color: #783e47; }
+    .feedback h3 { color: #ef9fae; }
+    .feedback.good h3 { color: #d4d16a; }
+    .score-ring { background: conic-gradient(#aaa639 var(--score, 0%), #4b3b25 0); }
+    .score-ring-inner { background: #222; }
+    .score-ring-inner strong { color: #ef9fae; }
+    .score-ring-inner span, .weak-item { color: #e4d9c8; }
+    .weak-item strong { color: #ef9fae; }
+    .empty-weak { color: #d4d16a !important; }
+
+    .page-footer {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      padding: 12px 20px;
+      color: #f5e7d2;
+      background: #50000e;
+      font-size: 12px;
+    }
+    .page-footer span { color: #ef9fae; font-weight: 750; }
+    .page-footer a { color: #ffdfaa; text-decoration: none; }
+    .page-footer a:hover { color: #ef9fae; text-decoration: underline; }
+    .ai-launcher {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 20;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 50px;
+      padding: 0 18px;
+      color: #1a1a1a;
+      background: #d4d16a;
+      border: 1px solid #ef9fae;
+      border-radius: 28px;
+      box-shadow: 0 8px 26px #0008;
+      font-weight: 800;
+    }
+    .ai-launcher:hover { background: #ef9fae; }
+    .ai-launcher-icon { font-size: 18px; }
+    .ai-chat {
+      position: fixed;
+      right: 24px;
+      bottom: 86px;
+      z-index: 20;
+      display: flex;
+      width: min(390px, calc(100vw - 28px));
+      height: min(540px, calc(100vh - 120px));
+      flex-direction: column;
+      overflow: hidden;
+      background: #222;
+      border: 1px solid #80632e;
+      border-radius: 17px;
+      box-shadow: 0 20px 60px #0009;
+    }
+    .ai-chat[hidden] { display: none; }
+    .ai-chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 15px 17px;
+      background: #3d311f;
+      border-bottom: 1px solid #66512e;
+    }
+    .ai-chat-heading { display: flex; align-items: center; gap: 11px; }
+    .ai-chat-badge {
+      display: grid;
+      width: 37px;
+      height: 37px;
+      place-items: center;
+      color: #1a1a1a;
+      background: #d4d16a;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 900;
+    }
+    .ai-chat-header strong { display: block; color: #ef9fae; font-size: 14px; }
+    .ai-chat-header small { display: block; margin-top: 2px; color: #d4c9b7; font-size: 10px; }
+    .ai-close {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      color: #ffdfaa;
+      background: transparent;
+      border: 1px solid #80632e;
+      border-radius: 9px;
+      font-size: 18px;
+    }
+    .ai-close:hover { background: #50000e; }
+    .ai-messages {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .ai-message {
+      max-width: 88%;
+      padding: 11px 13px;
+      color: #f5f0e8;
+      background: #332c22;
+      border: 1px solid #51432e;
+      border-radius: 13px 13px 13px 4px;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .ai-message.user {
+      align-self: flex-end;
+      color: #1a1a1a;
+      background: #d4d16a;
+      border-color: #d4d16a;
+      border-radius: 13px 13px 4px 13px;
+    }
+    .ai-message.error {
+      color: #ffe3e8;
+      background: #3d2024;
+      border-color: #783e47;
+    }
+    .ai-sources { padding-top: 8px; }
+    .ai-sources strong { display: block; margin-bottom: 5px; }
+    .ai-sources a { display: block; color: #e2df88; text-decoration: underline; }
+    .ai-chat-form { padding: 12px; background: #29251f; border-top: 1px solid #4b3b25; }
+    .ai-chat-input-row { display: flex; align-items: flex-end; gap: 9px; }
+    .ai-chat textarea {
+      flex: 1;
+      min-width: 0;
+      min-height: 44px;
+      max-height: 110px;
+      padding: 11px 12px;
+      resize: vertical;
+      color: #f5f0e8;
+      background: #1a1a1a;
+      border: 1px solid #66512e;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 12px;
+    }
+    .ai-chat textarea::placeholder { color: #b8aa95; }
+    .ai-chat textarea:focus-visible { outline: 2px solid #d4d16a; outline-offset: 1px; }
+    .ai-send {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      place-items: center;
+      color: #1a1a1a;
+      background: #aaa639;
+      border: 0;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .ai-send:hover:not(:disabled) { background: #d4d16a; }
+    .ai-send:disabled { cursor: wait; opacity: .6; }
+    .ai-chat-hint { margin: 8px 2px 0; color: #b8aa95; font-size: 10px; }
+    .ai-chat[aria-busy="true"] .ai-chat-header small::after { content: " · Respondiendo…"; color: #d4d16a; }
+    .auth-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px 18px;
+      background:
+        radial-gradient(ellipse at 14% 12%, #e8e5ff 0, transparent 36%),
+        radial-gradient(ellipse at 90% 90%, #ecebff 0, transparent 35%),
+        var(--canvas);
+    }
+    .auth-card {
+      display: grid;
+      width: min(920px, 100%);
+      min-height: 560px;
+      grid-template-columns: .9fr 1.1fr;
+      overflow: hidden;
+    }
+    .auth-welcome {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(28px, 5vw, 52px);
+      color: white;
+      background: linear-gradient(145deg, #5145bb, #8175ed 72%, #a197f1);
+    }
+    .auth-welcome .brand { color: white; }
+    .auth-welcome .brand-name span { color: #dfdcff; }
+    .auth-welcome-copy { margin: auto 0; padding: 48px 0; }
+    .auth-welcome-copy h2 { margin: 0 0 13px; font-size: clamp(27px, 3.5vw, 38px); letter-spacing: -.045em; line-height: 1.12; }
+    .auth-welcome-copy p { margin: 0; color: #eeecff; font-size: 14px; line-height: 1.7; }
+    .auth-welcome-note { color: #eeecff; font-size: 12px; }
+    .auth-content { align-self: center; padding: clamp(26px, 5vw, 54px); }
+    .auth-content h1 { margin: 7px 0; font-size: 29px; }
+    .auth-description { margin: 0 0 22px; color: var(--muted); font-size: 13px; }
+    .auth-form { display: grid; gap: 13px; }
+    .auth-field { display: grid; gap: 6px; }
+    .auth-field label { font-size: 12px; font-weight: 750; }
+    .auth-field input, .auth-field select {
+      width: 100%;
+      min-height: 43px;
+      padding: 10px 12px;
+      color: var(--ink);
+      background: white;
+      border: 1px solid #dfe0e9;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 13px;
+    }
+    .auth-field input:focus-visible, .auth-field select:focus-visible { outline: 3px solid #a9a1ff; outline-offset: 2px; }
+    .auth-field[hidden], .auth-links button[hidden], .auth-back[hidden] { display: none; }
+    .auth-submit { width: 100%; margin-top: 5px; }
+    .auth-notice {
+      margin: 0 0 15px;
+      padding: 10px 12px;
+      color: #794c00;
+      background: #fff7df;
+      border: 1px solid #f5e2a9;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+    .auth-notice.error { color: #9e303a; background: var(--red-light); border-color: #f5c8cb; }
+    .auth-notice[hidden] { display: none; }
+    .auth-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 9px; margin-top: 17px; }
+    .auth-links button, .auth-back {
+      padding: 0;
+      color: var(--purple-dark);
+      background: transparent;
+      border: 0;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .auth-links button:hover, .auth-back:hover { color: var(--purple); }
+    .topbar-user { display: flex; align-items: center; gap: 10px; }
+    .topbar-user-copy { display: grid; line-height: 1.25; }
+    .topbar-user-copy strong { color: var(--ink); font-size: 12px; }
+    .topbar-user-copy span { font-size: 11px; }
+    .logout-button {
+      padding: 8px 11px;
+      color: var(--purple-dark);
+      background: white;
+      border: 1px solid #dcd9fa;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .logout-button:hover { background: var(--purple-light); }
+    .auth-screen[hidden], .app-shell[hidden] { display: none; }
+    @media (max-width: 560px) {
+      .page-footer { flex-wrap: wrap; gap: 8px 16px; }
+      .progress-stats { grid-template-columns: 1fr; }
+      .progress-topic { grid-template-columns: 80px 1fr auto; gap: 8px; }
+      .ai-launcher { right: 14px; bottom: 14px; }
+      .ai-chat { right: 14px; bottom: 76px; height: min(540px, calc(100vh - 100px)); }
+      .auth-card { grid-template-columns: 1fr; }
+      .auth-welcome { min-height: 210px; padding: 24px; }
+      .auth-welcome-copy { padding: 25px 0 10px; }
+      .auth-welcome-copy h2 { font-size: 27px; }
+      .auth-welcome-note { display: none; }
+      .auth-content { padding: 28px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="auth-screen" id="authScreen" aria-labelledby="authTitle">
+    <div class="auth-card card">
+      <aside class="auth-welcome">
+        <div class="brand" aria-label="CodeQuiz IA">
+          <div class="brand-mark" aria-hidden="true">&lt;/&gt;</div>
+          <div class="brand-name">CodeQuiz <span>IA</span></div>
+        </div>
+        <div class="auth-welcome-copy">
+          <span class="banner-tag">TU ESPACIO DE APRENDIZAJE</span>
+          <h2>Aprende programación a tu ritmo.</h2>
+          <p>Practica, descubre tus fortalezas y recibe explicaciones para seguir mejorando.</p>
+        </div>
+        <div class="auth-welcome-note">Un lugar para estudiantes y docentes.</div>
+      </aside>
+      <div class="auth-content">
+        <div class="eyebrow">Bienvenido a CodeQuiz IA</div>
+        <h1 id="authTitle">Inicia sesión</h1>
+        <p class="auth-description" id="authDescription">Ingresa con tu usuario o correo y contraseña.</p>
+        <p class="auth-notice" id="authNotice" role="status" aria-live="polite" hidden></p>
+        <form class="auth-form" id="authForm" novalidate>
+          <div class="auth-field" id="authNameGroup" hidden>
+            <label for="authName">Nombre completo</label>
+            <input id="authName" name="name" type="text" maxlength="80" autocomplete="name">
+          </div>
+          <div class="auth-field" id="authUsernameGroup" hidden>
+            <label for="authUsername">Nombre de usuario</label>
+            <input id="authUsername" name="username" type="text" minlength="3" maxlength="24" autocomplete="username">
+          </div>
+          <div class="auth-field" id="authIdentifierGroup">
+            <label for="authIdentifier">Usuario o correo</label>
+            <input id="authIdentifier" name="identifier" type="text" maxlength="254" autocomplete="username">
+          </div>
+          <div class="auth-field" id="authEmailGroup" hidden>
+            <label for="authEmail">Correo electrónico</label>
+            <input id="authEmail" name="email" type="email" maxlength="254" autocomplete="email">
+          </div>
+          <div class="auth-field" id="authRoleGroup" hidden>
+            <label for="authRole">Tipo de cuenta</label>
+            <select id="authRole" name="role">
+              <option value="student">Estudiante</option>
+              <option value="teacher">Docente</option>
+            </select>
+          </div>
+          <div class="auth-field" id="authInviteGroup" hidden>
+            <label for="authInviteCode">Código de invitación docente</label>
+            <input id="authInviteCode" name="inviteCode" type="password" autocomplete="off">
+          </div>
+          <div class="auth-field" id="authPasswordGroup">
+            <label for="authPassword">Contraseña</label>
+            <input id="authPassword" name="password" type="password" minlength="8" maxlength="128" autocomplete="current-password">
+          </div>
+          <div class="auth-field" id="authConfirmGroup" hidden>
+            <label for="authConfirmPassword">Confirma la contraseña</label>
+            <input id="authConfirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password">
+          </div>
+          <button class="primary-button auth-submit" id="authSubmit" type="submit">Iniciar sesión <span aria-hidden="true">→</span></button>
+        </form>
+        <div class="auth-links">
+          <button id="authSwitchButton" type="button">Crear una cuenta</button>
+          <button id="authForgotButton" type="button">Olvidé mi contraseña</button>
+          <button id="authBackButton" class="auth-back" type="button" hidden>Volver a iniciar sesión</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="app-shell" id="appShell" hidden>
+    <header class="topbar">
+      <div class="brand" aria-label="CodeQuiz IA">
+        <div class="brand-mark" aria-hidden="true">&lt;/&gt;</div>
+        <div class="brand-name">CodeQuiz <span>IA</span></div>
+      </div>
+      <div class="topbar-right topbar-user">
+        <div class="topbar-user-copy"><strong id="signedInName"></strong><span id="signedInRole"></span></div>
+        <div class="avatar" id="signedInAvatar" aria-hidden="true"></div>
+        <button class="logout-button" id="logoutButton" type="button">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar" aria-label="Navegación principal">
+        <p class="side-label">Aprendizaje</p>
+        <button class="side-link" type="button" data-page="home"><span class="side-icon" aria-hidden="true">⌂</span> Inicio</button>
+        <button class="side-link active" type="button" data-page="quizzes" aria-current="page"><span class="side-icon" aria-hidden="true">▣</span> Quizzes</button>
+        <button class="side-link" type="button" data-page="progress"><span class="side-icon" aria-hidden="true">▥</span> Mi progreso</button>
+        <button class="side-link" type="button" data-page="content"><span class="side-icon" aria-hidden="true">▤</span> Contenido</button>
+        <button class="side-link" type="button" data-page="database"><span class="side-icon" aria-hidden="true">⌕</span> Base de datos</button>
+        <div class="sidebar-note">
+          <strong>Aprende a tu ritmo</strong>
+          <p>Cada respuesta ayuda a encontrar qué tema practicar a continuación.</p>
+        </div>
+      </aside>
+
+      <main>
+        <div class="page-heading">
+          <div class="eyebrow">Tu espacio de práctica</div>
+          <h1 id="pageTitle">Quizzes de programación</h1>
+          <p id="pageDescription">Practica, descubre tus fortalezas y recibe orientación para seguir mejorando.</p>
+        </div>
+
+        <p class="status-banner" id="storageNotice" role="status" hidden></p>
+
+        <section class="home-view hidden" id="homeView" aria-label="Inicio">
+          <article class="card home-welcome">
+            <div class="eyebrow">CodeQuiz IA</div>
+            <h2>Aprende desarrollo web a tu ritmo</h2>
+            <p>Practica JavaScript, Vue.js y CSS con quizzes que ajustan su dificultad y te explican cómo mejorar en cada respuesta.</p>
+            <button class="primary-button" id="homeStartButton" type="button">Ir a los quizzes <span aria-hidden="true">→</span></button>
+          </article>
+          <section class="below-grid" aria-label="Resumen de aprendizaje">
+            <article class="card small-card">
+              <h3>Tus temas de aprendizaje</h3>
+              <p>Elige una ruta o practica un tema específico.</p>
+              <div class="topic-list">
+                <div class="topic"><span class="topic-icon" aria-hidden="true">JS</span> JavaScript</div>
+                <div class="topic"><span class="topic-icon" aria-hidden="true">V</span> Vue.js</div>
+                <div class="topic"><span class="topic-icon" aria-hidden="true">#</span> CSS</div>
+              </div>
+            </article>
+            <article class="card small-card">
+              <h3>Tu último intento</h3>
+              <p id="homeLastCaption">Aún no tienes resultados guardados.</p>
+              <div class="last-result">
+                <div><strong id="homeLastScore">—</strong><span id="homeLastScoreLabel">Completa un quiz para ver tu avance</span></div>
+                <div class="mini-ring" id="homeLastRing" style="--progress: 0%"><span id="homeLastPercent">0%</span></div>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <section class="progress-view hidden" id="progressView" aria-label="Mi progreso">
+          <article class="card progress-panel">
+            <div class="eyebrow">Seguimiento de aprendizaje</div>
+            <h2>Mi progreso</h2>
+            <p>Consulta tus intentos y reconoce qué temas has practicado más.</p>
+          </article>
+          <div class="progress-stats" aria-label="Estadísticas generales">
+            <article class="card progress-stat"><span>Quizzes completados</span><strong id="progressAttempts">0</strong></article>
+            <article class="card progress-stat"><span>Promedio de aciertos</span><strong id="progressAverage">0%</strong></article>
+            <article class="card progress-stat"><span>Mejor resultado</span><strong id="progressBest">—</strong></article>
+          </div>
+          <article class="card progress-panel">
+            <h3>Desempeño por tema</h3>
+            <div class="progress-topic-list" id="progressTopics"></div>
+          </article>
+          <article class="card progress-panel">
+            <h3>Intentos recientes</h3>
+            <div class="attempt-list" id="attemptList"></div>
+          </article>
+        </section>
+
+        <section class="learning-content hidden" id="contentView" aria-label="Contenido de aprendizaje">
+          <article class="card learning-card">
+            <div class="eyebrow">Fundamentos web</div>
+            <h2>JavaScript: da instrucciones a la página</h2>
+            <p>JavaScript permite describir acciones y lógica. Puedes guardar información en variables, tomar decisiones y responder a eventos como un clic.</p>
+            <h3>Ejemplo: responder a un clic</h3>
+            <pre><code>const boton = document.querySelector("#saludar");
+
+boton.addEventListener("click", () => {
+  alert("¡Hola, estudiante!");
+});</code></pre>
+            <p class="learning-tip">En este ejemplo, querySelector encuentra el botón y addEventListener ejecuta la función cuando ocurre el clic.</p>
+          </article>
+
+          <article class="card learning-card">
+            <div class="eyebrow">Interfaces reactivas</div>
+            <h2>Vue.js: conecta los datos con la interfaz</h2>
+            <p>Vue es un framework de JavaScript para crear interfaces. Sus plantillas describen qué mostrar y su sistema reactivo actualiza la vista cuando cambian los datos.</p>
+            <h3>Ejemplo: contador con Composition API</h3>
+            <pre><code>&lt;script setup&gt;
+import { ref } from "vue";
+
+const contador = ref(0);
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;button @click="contador++"&gt;
+    Clics: {{ contador }}
+  &lt;/button&gt;
+&lt;/template&gt;</code></pre>
+            <p class="learning-tip">ref(0) crea un dato reactivo. @click escucha el clic y las dobles llaves muestran su valor en la plantilla.</p>
+          </article>
+
+          <article class="card learning-card">
+            <div class="eyebrow">Estilos y diseño</div>
+            <h2>CSS: organiza y da estilo</h2>
+            <p>CSS define cómo se ven los elementos HTML: colores, tamaños, espacios y distribución. Un selector indica a qué elementos se aplican las reglas.</p>
+            <h3>Ejemplo: tarjetas adaptables</h3>
+            <pre><code>.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.tarjeta {
+  padding: 1rem;
+  border-radius: 12px;
+  background-color: #f2eadc;
+}</code></pre>
+            <p class="learning-tip">La clase .tarjetas crea dos columnas iguales y gap separa sus elementos. La clase .tarjeta aplica estilos a cada tarjeta.</p>
+          </article>
+        </section>
+
+        <section class="learning-content hidden" id="databaseView" aria-label="Biblioteca de consulta">
+          <article class="card resource-card">
+            <div class="eyebrow">Fuentes confiables</div>
+            <h2>Biblioteca de consulta</h2>
+            <p class="resource-intro">Consulta documentación oficial y guías de referencia para profundizar. El asistente también busca preguntas de programación en Stack Overflow al responder.</p>
+            <div class="resource-list">
+              <a class="resource-link" href="https://developer.mozilla.org/es/docs/Web/JavaScript/Guide" target="_blank" rel="noopener noreferrer">
+                <span><strong>Guía de JavaScript · MDN</strong><span>Guía del lenguaje: tipos, control de flujo, funciones, objetos y más. En español.</span></span>
+                <span class="external-icon" aria-hidden="true">↗</span>
+              </a>
+              <a class="resource-link" href="https://developer.mozilla.org/es/docs/Web/JavaScript/Reference" target="_blank" rel="noopener noreferrer">
+                <span><strong>Referencia de JavaScript · MDN</strong><span>Consulta detallada de objetos, operadores, sentencias y APIs del lenguaje.</span></span>
+                <span class="external-icon" aria-hidden="true">↗</span>
+              </a>
+              <a class="resource-link" href="https://vuejs.org/guide/introduction.html" target="_blank" rel="noopener noreferrer">
+                <span><strong>Guía oficial de Vue 3</strong><span>Introducción, reactividad, componentes, plantillas y formas de usar Vue. En inglés.</span></span>
+                <span class="external-icon" aria-hidden="true">↗</span>
+              </a>
+              <a class="resource-link" href="https://vuejs.org/tutorial/" target="_blank" rel="noopener noreferrer">
+                <span><strong>Tutorial interactivo de Vue</strong><span>Aprende construyendo una aplicación paso a paso en el navegador. En inglés.</span></span>
+                <span class="external-icon" aria-hidden="true">↗</span>
+              </a>
+              <a class="resource-link" href="https://developer.mozilla.org/es/docs/Web/CSS" target="_blank" rel="noopener noreferrer">
+                <span><strong>Guía y referencia de CSS · MDN</strong><span>Conceptos, propiedades y enlaces para aprender diseño de páginas web. En español.</span></span>
+                <span class="external-icon" aria-hidden="true">↗</span>
+              </a>
+              <a class="resource-link" href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/Styling_basics" target="_blank" rel="noopener noreferrer">
+                <span><strong>Primeros pasos en CSS · MDN</strong><span>Aprende sintaxis, selectores y cómo aplicar estilos desde los fundamentos. En español.</span></span>
+                <span class="external-icon" aria-hidden="true">↗</span>
+              </a>
+              <a class="resource-link" href="https://stackoverflow.com/questions" target="_blank" rel="noopener noreferrer">
+                <span><strong>Preguntas de programación · Stack Overflow</strong><span>Comunidad de preguntas y respuestas; el asistente busca coincidencias y muestra los enlaces originales.</span></span>
+                <span class="external-icon" aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </article>
+        </section>
+
+        <section class="card intro-card" id="introView" aria-labelledby="introTitle">
+          <div class="intro-banner">
+            <div class="banner-copy">
+              <span class="banner-tag">RUTA ADAPTATIVA</span>
+              <h2 id="introTitle">Un reto a tu medida</h2>
+              <p>Las preguntas ajustan su dificultad según tus respuestas. Si algo no sale, entenderás por qué y qué puedes practicar.</p>
+            </div>
+            <div class="sparkle" aria-hidden="true">✦</div>
+          </div>
+          <div class="intro-content">
+            <div>
+              <h3>Prepara tu quiz</h3>
+              <p class="subcopy">Elige un tema o deja que la ruta adaptativa combine varios conceptos.</p>
+              <label class="field-label" for="topicSelect">Tema de práctica</label>
+              <select id="topicSelect">
+                <option value="all">Ruta adaptativa · JavaScript, Vue.js y CSS</option>
+                <option value="JavaScript">JavaScript</option>
+                <option value="Vue.js">Vue.js</option>
+                <option value="CSS">CSS</option>
+              </select>
+              <button class="primary-button full-width" id="startButton" type="button">Comenzar quiz <span aria-hidden="true">→</span></button>
+            </div>
+            <div class="quiz-aside" aria-label="Información del quiz">
+              <div>
+                <div class="aside-label">Duración estimada</div>
+                <div class="aside-value">3–5 min</div>
+              </div>
+              <div>
+                <div class="aside-label">Preguntas</div>
+                <div class="aside-value">Hasta 5</div>
+              </div>
+              <div class="aside-divider"></div>
+              <div class="aside-caption">Al terminar verás tus aciertos, los temas que puedes reforzar y una recomendación para continuar.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="below-grid" id="overview" aria-label="Resumen de aprendizaje">
+          <article class="card small-card">
+            <h3>Temas disponibles</h3>
+            <p>Desarrolla habilidades para crear sitios y aplicaciones web.</p>
+            <div class="topic-list">
+              <div class="topic"><span class="topic-icon" aria-hidden="true">JS</span> JavaScript</div>
+              <div class="topic"><span class="topic-icon" aria-hidden="true">V</span> Vue.js</div>
+              <div class="topic"><span class="topic-icon" aria-hidden="true">#</span> CSS</div>
+            </div>
+          </article>
+          <article class="card small-card">
+            <h3>Tu último intento</h3>
+            <p id="lastAttemptCaption">Aún no tienes resultados guardados.</p>
+            <div class="last-result">
+              <div><strong id="lastScore">—</strong><span id="lastScoreLabel">Completa un quiz para ver tu avance</span></div>
+              <div class="mini-ring" id="lastRing" style="--progress: 0%"><span id="lastPercent">0%</span></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="card quiz-card hidden" id="quizView" aria-labelledby="questionTitle">
+          <div class="quiz-topline">
+            <span id="questionCount">Pregunta 1 de 5</span>
+            <span class="topic-pill" id="questionTopic">JavaScript</span>
+          </div>
+          <div class="progress-track" role="progressbar" aria-label="Progreso del quiz" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <p class="question-level" id="questionLevel">Nivel intermedio</p>
+          <div class="lesson-intro" id="lessonIntro">
+            <strong>Antes de empezar: <span id="lessonTopic"></span></strong>
+            <p id="lessonDescription"></p>
+          </div>
+          <h2 class="question-title" id="questionTitle"></h2>
+          <pre id="questionCode" class="hidden" aria-label="Código de ejemplo"></pre>
+          <div class="options" id="options" role="group" aria-label="Opciones de respuesta"></div>
+          <div class="feedback" id="feedback" role="status" aria-live="polite" hidden></div>
+          <div class="quiz-footer">
+            <span class="hint" id="quizHint">Selecciona la respuesta que consideres correcta.</span>
+            <button class="primary-button" id="answerButton" type="button" disabled>Comprobar respuesta</button>
+          </div>
+        </section>
+
+        <section class="card result-card hidden" id="resultView" aria-labelledby="resultTitle">
+          <div class="result-header">
+            <div class="score-ring" id="scoreRing">
+              <div class="score-ring-inner"><strong id="finalScore">0/5</strong><span>aciertos</span></div>
+            </div>
+            <div>
+              <div class="eyebrow">Quiz completado</div>
+              <h2 id="resultTitle">¡Buen trabajo practicando!</h2>
+              <p id="resultSummary"></p>
+            </div>
+          </div>
+          <div class="result-body">
+            <div class="result-panel">
+              <h3>Temas para reforzar</h3>
+              <div class="weak-list" id="weakList"></div>
+            </div>
+            <div class="result-panel">
+              <h3>Tu siguiente paso</h3>
+              <p id="recommendation"></p>
+            </div>
+          </div>
+          <div class="result-actions">
+            <button class="primary-button" type="button" id="reinforceButton">Practicar temas por reforzar <span aria-hidden="true">→</span></button>
+            <button class="secondary-button" type="button" id="againButton">Hacer otro quiz</button>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer class="page-footer">
+      <span>CodeQuiz IA</span>
+      <a href="#introView">Práctica adaptativa</a>
+      <a href="#overview">JavaScript · Vue.js · CSS</a>
+    </footer>
+    <button class="ai-launcher" id="aiLauncher" type="button" aria-expanded="false" aria-controls="aiChat">
+      <span class="ai-launcher-icon" aria-hidden="true">✦</span> Consultar a la IA
+    </button>
+    <section class="ai-chat" id="aiChat" aria-label="Asistente de IA" aria-busy="false" hidden>
+      <header class="ai-chat-header">
+        <div class="ai-chat-heading">
+          <div class="ai-chat-badge" aria-hidden="true">✦</div>
+          <div><strong>Asistente CodeQuiz</strong><small>Programación general · fuentes en línea</small></div>
+        </div>
+        <button class="ai-close" id="aiClose" type="button" aria-label="Cerrar asistente">×</button>
+      </header>
+      <div class="ai-messages" id="aiMessages" role="log" aria-live="polite" aria-relevant="additions">
+        <div class="ai-message">¡Hola! Puedo ayudarte con programación, lenguajes, algoritmos, bases de datos y desarrollo web. Buscaré referencias en línea para respaldar mis respuestas. ¿Qué quieres aprender?</div>
+      </div>
+      <form class="ai-chat-form" id="aiChatForm">
+        <div class="ai-chat-input-row">
+          <label class="sr-only" for="aiQuestion">Escribe tu pregunta para el asistente</label>
+          <textarea id="aiQuestion" name="question" rows="1" maxlength="2000" placeholder="Escribe tu pregunta…" required></textarea>
+          <button class="ai-send" id="aiSend" type="submit" aria-label="Enviar pregunta">↑</button>
+        </div>
+        <p class="ai-chat-hint">La pregunta se busca en Stack Overflow y se envía al proveedor de IA. Verifica conceptos importantes.</p>
+      </form>
+    </section>
+  </div>
+
+  <script>
+    const questionBank = [
+      {
+        topic: "JavaScript", difficulty: 1,
+        prompt: "¿Qué valor imprime este código?",
+        code: "const nombre = \"Ada\";\nconsole.log(`Hola, ${nombre}`);",
+        options: ["Hola, nombre", "Hola, Ada", "Ada Hola", "Se produce un error"],
+        answer: 1,
+        explanation: "Las comillas invertidas crean una plantilla de texto. ${nombre} se reemplaza por el valor de la variable, Ada.",
+        nextStep: "Practica las plantillas de texto con comillas invertidas y la interpolación ${variable}."
+      },
+      {
+        topic: "JavaScript", difficulty: 1,
+        prompt: "¿Qué número muestra este código?",
+        code: "let puntos = 3;\npuntos += 2;\nconsole.log(puntos);",
+        options: ["3", "5", "32", "undefined"],
+        answer: 1,
+        explanation: "El operador += suma 2 al valor actual de puntos. El resultado que se muestra es 5.",
+        nextStep: "Practica los operadores de asignación como +=, -= y *= para actualizar variables."
+      },
+      {
+        topic: "JavaScript", difficulty: 2,
+        prompt: "¿Qué resultado produce la comparación estricta?",
+        code: "console.log(\"5\" === 5);",
+        options: ["true", "false", "\"5\"", "Se produce un error"],
+        answer: 1,
+        explanation: "=== compara valor y tipo sin convertirlos. El primer valor es un texto y el segundo un número, por eso el resultado es false.",
+        nextStep: "Diferencia ==, que puede convertir tipos, de ===, que compara tipo y valor."
+      },
+      {
+        topic: "JavaScript", difficulty: 2,
+        prompt: "¿Qué valor imprime este código después del push?",
+        code: "const frutas = [\"pera\"];\nfrutas.push(\"mango\");\nconsole.log(frutas.length);",
+        options: ["1", "2", "mango", "undefined"],
+        answer: 1,
+        explanation: "push agrega mango al final del arreglo. Ahora contiene dos elementos y length devuelve 2.",
+        nextStep: "Prueba métodos de arreglos como push y consulta length para contar sus elementos."
+      },
+      {
+        topic: "JavaScript", difficulty: 3,
+        prompt: "¿Qué propiedad se muestra en la consola?",
+        code: "const usuario = { nombre: \"Luz\" };\nusuario.nombre = \"Sol\";\nconsole.log(usuario.nombre);",
+        options: ["Luz", "Sol", "usuario.nombre", "Se produce un error"],
+        answer: 1,
+        explanation: "const impide reasignar la variable usuario, pero permite modificar una propiedad del objeto. nombre queda con el valor Sol.",
+        nextStep: "Distingue reasignar una constante de modificar una propiedad del objeto que contiene."
+      },
+      {
+        topic: "JavaScript", difficulty: 2,
+        prompt: "¿Cuántos elementos quedan después de filtrar?",
+        code: "const valores = [true, false, true];\nconst activos = valores.filter(Boolean);\nconsole.log(activos.length);",
+        options: ["1", "2", "3", "false"],
+        answer: 1,
+        explanation: "filter conserva los valores que cumplen la condición. En este caso quedan los dos valores true.",
+        nextStep: "Practica filter con una función de condición para seleccionar elementos de un arreglo."
+      },
+      {
+        topic: "JavaScript", difficulty: 3,
+        prompt: "¿Qué valor tiene nombre después de la desestructuración?",
+        code: "const persona = { nombre: \"Sam\" };\nconst { nombre } = persona;\nconsole.log(nombre);",
+        options: ["persona", "nombre", "Sam", "undefined"],
+        answer: 2,
+        explanation: "La desestructuración extrae la propiedad nombre del objeto persona y la guarda en una variable con el mismo nombre.",
+        nextStep: "Practica la sintaxis const { propiedad } = objeto para extraer propiedades de objetos."
+      },
+      {
+        topic: "JavaScript", difficulty: 2,
+        prompt: "¿Qué imprime el programa después de ejecutar la función?",
+        code: "function sumar(a, b = 2) {\n  return a + b;\n}\nconsole.log(sumar(5));",
+        options: ["5", "7", "10", "undefined"],
+        answer: 1,
+        explanation: "Como no se envía un segundo argumento, b usa su valor predeterminado (2). La función devuelve 5 + 2.",
+        nextStep: "Revisa los parámetros predeterminados y cómo return entrega el resultado de una función."
+      },
+      {
+        topic: "JavaScript", difficulty: 3,
+        prompt: "¿Qué valor tiene resultado al finalizar?",
+        code: "const numeros = [2, 3, 4];\nconst resultado = numeros\n  .filter(numero => numero > 2)\n  .map(numero => numero * 2);",
+        options: ["[2, 3, 4]", "[3, 4]", "[6, 8]", "[4, 6, 8]"],
+        answer: 2,
+        explanation: "filter conserva 3 y 4 porque son mayores que 2. Luego map duplica cada valor, así que el resultado es [6, 8].",
+        nextStep: "Traza el resultado de cada método encadenado: primero filter selecciona y después map transforma."
+      },
+      {
+        topic: "JavaScript", difficulty: 1,
+        prompt: "¿Qué devuelve typeof para el valor \"CodeQuiz\"?",
+        code: "typeof \"CodeQuiz\"",
+        options: ["text", "string", "char", "String"],
+        answer: 1,
+        explanation: "typeof devuelve la cadena \"string\" cuando el valor es texto.",
+        nextStep: "Familiarízate con los tipos primitivos de JavaScript y los resultados exactos de typeof."
+      },
+      {
+        topic: "Vue.js", difficulty: 1,
+        prompt: "En Vue 3 con Composition API, ¿para qué se usa ref?",
+        code: "import { ref } from 'vue';\nconst contador = ref(0);",
+        options: ["Para crear un estilo CSS", "Para crear un dato reactivo", "Para registrar una ruta", "Para hacer una petición HTTP"],
+        answer: 1,
+        explanation: "ref crea una referencia reactiva. Cuando cambia su valor, Vue actualiza las partes de la interfaz que dependen de él.",
+        nextStep: "Practica creando refs y recuerda acceder a su valor como contador.value dentro del script."
+      },
+      {
+        topic: "Vue.js", difficulty: 2,
+        prompt: "¿Qué directiva muestra un elemento solo cuando haySesion es verdadero?",
+        code: "<p v-if=\"haySesion\">Bienvenido</p>",
+        options: ["v-for", "v-model", "v-if", "v-bind"],
+        answer: 1,
+        explanation: "v-if renderiza el elemento únicamente cuando la expresión indicada es verdadera.",
+        nextStep: "Compara v-if, que agrega o quita elementos, con v-show, que los oculta o muestra mediante CSS."
+      },
+      {
+        topic: "Vue.js", difficulty: 3,
+        prompt: "¿Qué hace v-for en esta plantilla?",
+        code: "<li v-for=\"tarea in tareas\" :key=\"tarea.id\">\n  {{ tarea.nombre }}\n</li>",
+        options: ["Valida el formulario", "Crea un elemento por cada tarea", "Convierte el texto en HTML", "Define una propiedad computada"],
+        answer: 1,
+        explanation: "v-for recorre la colección tareas y genera un elemento de lista por cada elemento. :key ayuda a Vue a identificar cada elemento de forma única.",
+        nextStep: "Practica el patrón elemento in colección y usa una key única y estable para cada elemento."
+      },
+      {
+        topic: "Vue.js", difficulty: 1,
+        prompt: "¿Qué interpolación muestra el valor de mensaje en una plantilla de Vue?",
+        code: "<h1>{{ mensaje }}</h1>",
+        options: ["${mensaje}", "{{ mensaje }}", "[[mensaje]]", "<%= mensaje %>"],
+        answer: 1,
+        explanation: "Las dobles llaves son la sintaxis de interpolación de Vue para mostrar el valor de una expresión en texto.",
+        nextStep: "Usa {{ expresión }} para interpolar texto y recuerda que los atributos dinámicos se enlazan con v-bind o :."
+      },
+      {
+        topic: "Vue.js", difficulty: 1,
+        prompt: "¿Qué hace @click en este botón?",
+        code: "<button @click=\"contador++\">Sumar</button>",
+        options: ["Aplica estilos al botón", "Ejecuta una acción cuando se hace clic", "Crea una lista de botones", "Enlaza un campo de texto"],
+        answer: 1,
+        explanation: "@click es la forma abreviada de v-on:click y escucha el evento de clic para ejecutar la expresión indicada.",
+        nextStep: "Practica directivas de eventos como @click y @input para conectar acciones de usuario."
+      },
+      {
+        topic: "Vue.js", difficulty: 2,
+        prompt: "¿Para qué sirve v-model en un campo de texto?",
+        code: "<input v-model=\"nombre\" />",
+        options: ["Para enlazar el valor del campo con un dato", "Para ocultar el campo", "Para repetir el campo varias veces", "Para cambiar la ruta de la página"],
+        answer: 0,
+        explanation: "v-model crea un enlace bidireccional: el campo muestra el dato y los cambios del usuario actualizan ese dato.",
+        nextStep: "Usa v-model con inputs para practicar formularios reactivos."
+      },
+      {
+        topic: "Vue.js", difficulty: 3,
+        prompt: "¿Qué valor tendrá total si precio es 4 y cantidad es 3?",
+        code: "const precio = ref(4);\nconst cantidad = ref(3);\nconst total = computed(() => precio.value * cantidad.value);",
+        options: ["7", "12", "43", "0"],
+        answer: 1,
+        explanation: "computed calcula un valor derivado de sus dependencias reactivas. En este caso multiplica 4 por 3 y devuelve 12.",
+        nextStep: "Usa computed para valores que se calculan a partir de otros datos reactivos."
+      },
+      {
+        topic: "Vue.js", difficulty: 2,
+        prompt: "¿Cómo recibe el componente hijo el valor enviado en esta plantilla?",
+        code: "<Tarjeta titulo=\"Mi curso\" />",
+        options: ["Como una prop llamada titulo", "Como una variable global", "Como un evento del navegador", "Como una clase CSS"],
+        answer: 0,
+        explanation: "Los atributos enviados al componente se reciben como props. El hijo debe declarar la prop titulo para utilizar ese valor.",
+        nextStep: "Practica el flujo de datos de padre a hijo mediante props."
+      },
+      {
+        topic: "Vue.js", difficulty: 3,
+        prompt: "¿Cuándo se ejecuta normalmente onMounted?",
+        code: "onMounted(() => {\n  console.log(\"Componente listo\");\n});",
+        options: ["Antes de crear la aplicación", "Cuando el componente ya fue montado en la página", "Cada vez que se importa Vue", "Solo al cerrar el navegador"],
+        answer: 1,
+        explanation: "onMounted registra una función que Vue ejecuta cuando el componente ya se insertó en el DOM.",
+        nextStep: "Aprende los hooks del ciclo de vida para ejecutar tareas en el momento adecuado."
+      },
+      {
+        topic: "Vue.js", difficulty: 2,
+        prompt: "¿Qué clase se aplica cuando seleccionado es verdadero?",
+        code: "<button :class=\"{ activo: seleccionado }\">Tema</button>",
+        options: ["La clase activo", "La clase seleccionado", "Ninguna clase", "Una clase llamada true"],
+        answer: 0,
+        explanation: ":class enlaza clases de forma dinámica. La clase activo se añade cuando la propiedad seleccionado es verdadera.",
+        nextStep: "Practica :class con objetos para alternar estilos según el estado de la interfaz."
+      },
+      {
+        topic: "Vue.js", difficulty: 3,
+        prompt: "¿Qué permite hacer defineEmits en un componente con script setup?",
+        code: "const emit = defineEmits([\"guardar\"]);\nemit(\"guardar\");",
+        options: ["Declarar eventos que el componente puede emitir", "Crear variables CSS", "Importar un componente automáticamente", "Leer datos de una API"],
+        answer: 0,
+        explanation: "defineEmits declara los eventos personalizados que el componente puede enviar al componente padre.",
+        nextStep: "Practica cómo un hijo comunica acciones al padre usando eventos personalizados."
+      },
+      {
+        topic: "CSS", difficulty: 1,
+        prompt: "¿Qué selector aplica este estilo a todos los elementos con class=\"tarjeta\"?",
+        code: ".tarjeta {\n  padding: 16px;\n}",
+        options: ["#tarjeta", ".tarjeta", "tarjeta()", "*tarjeta"],
+        answer: 1,
+        explanation: "En CSS, el punto selecciona elementos por su clase. El símbolo # se usa para seleccionar por id.",
+        nextStep: "Repasa la diferencia entre selectores de clase (.) e identificador (#)."
+      },
+      {
+        topic: "CSS", difficulty: 2,
+        prompt: "¿Qué efecto tiene display: flex en este contenedor?",
+        code: ".contenedor {\n  display: flex;\n  justify-content: center;\n}",
+        options: ["Centra el texto verticalmente siempre", "Activa Flexbox y centra los elementos en el eje principal", "Oculta los elementos", "Crea una cuadrícula de columnas"],
+        answer: 1,
+        explanation: "display: flex activa el modelo Flexbox. justify-content alinea los elementos en el eje principal, que por defecto es horizontal.",
+        nextStep: "Practica Flexbox identificando el eje principal y las propiedades justify-content y align-items."
+      },
+      {
+        topic: "CSS", difficulty: 3,
+        prompt: "¿Qué regla hace que una tarjeta use tres columnas iguales en CSS Grid?",
+        code: ".rejilla {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n}",
+        options: ["Crea tres columnas de ancho igual", "Crea tres filas de altura fija", "Divide el contenedor en tres columnas de 1 píxel", "Aplica tres capas de color"],
+        answer: 0,
+        explanation: "repeat(3, 1fr) crea tres columnas y distribuye el espacio disponible en tres fracciones iguales.",
+        nextStep: "Explora repeat() y la unidad fr para construir rejillas adaptables sin fijar anchos en píxeles."
+      },
+      {
+        topic: "CSS", difficulty: 1,
+        prompt: "¿Qué propiedad cambia el color del texto?",
+        code: "p {\n  color: #5145bb;\n}",
+        options: ["background-color", "font-style", "color", "text-align"],
+        answer: 2,
+        explanation: "La propiedad color define el color del texto. background-color cambia el fondo del elemento.",
+        nextStep: "Practica identificando propiedades de texto, fondo, espaciado y alineación."
+      },
+      {
+        topic: "CSS", difficulty: 1,
+        prompt: "¿Qué espacio controla padding?",
+        code: ".caja {\n  padding: 16px;\n}",
+        options: ["El espacio interior, entre el contenido y el borde", "El espacio exterior entre elementos", "El grosor de la letra", "La distancia entre líneas de texto"],
+        answer: 0,
+        explanation: "padding crea espacio interior entre el contenido del elemento y su borde. margin controla el espacio exterior.",
+        nextStep: "Compara padding (interior) y margin (exterior) observando el modelo de caja."
+      },
+      {
+        topic: "CSS", difficulty: 2,
+        prompt: "¿Qué hace box-sizing: border-box?",
+        code: ".tarjeta {\n  width: 200px;\n  padding: 20px;\n  box-sizing: border-box;\n}",
+        options: ["Suma padding al ancho declarado", "Incluye padding y borde dentro del ancho declarado", "Elimina el padding", "Convierte la caja en una cuadrícula"],
+        answer: 1,
+        explanation: "Con border-box, el ancho indicado ya incluye el contenido, el padding y el borde.",
+        nextStep: "Usa box-sizing: border-box para que el tamaño de los elementos sea más fácil de calcular."
+      },
+      {
+        topic: "CSS", difficulty: 3,
+        prompt: "¿Qué regla aplica los estilos solo cuando la pantalla mide como máximo 600 px?",
+        code: "@media (max-width: 600px) {\n  .menu { display: none; }\n}",
+        options: ["Una animación de 600 segundos", "Una regla adaptable para pantallas de hasta 600 px", "Un selector para el elemento 600", "Un estilo que siempre se aplica"],
+        answer: 1,
+        explanation: "La media query comprueba el ancho de la pantalla y aplica su contenido cuando es de 600 px o menos.",
+        nextStep: "Practica media queries para adaptar diseños a móviles, tabletas y pantallas grandes."
+      },
+      {
+        topic: "CSS", difficulty: 2,
+        prompt: "¿Respecto a qué se ubica normalmente un elemento con position: fixed?",
+        code: ".boton-ayuda {\n  position: fixed;\n  right: 16px;\n  bottom: 16px;\n}",
+        options: ["Al último párrafo", "A la ventana del navegador", "Al tamaño de la fuente", "Al centro del documento siempre"],
+        answer: 1,
+        explanation: "Un elemento fixed se posiciona respecto a la ventana del navegador y permanece en ese lugar al desplazarse por la página.",
+        nextStep: "Compara position: fixed con absolute y relative para entender sus referencias de posicionamiento."
+      },
+      {
+        topic: "CSS", difficulty: 3,
+        prompt: "¿Qué selector tiene mayor especificidad?",
+        code: "#aviso { color: red; }\n.mensaje { color: blue; }",
+        options: ["#aviso", ".mensaje", "Ambos tienen la misma", "Depende del orden alfabético"],
+        answer: 0,
+        explanation: "Un selector de id (#aviso) tiene mayor especificidad que un selector de clase (.mensaje).",
+        nextStep: "Repasa cómo se calcula la especificidad para anticipar qué regla CSS prevalece."
+      },
+      {
+        topic: "CSS", difficulty: 1,
+        prompt: "¿Qué permite display: inline-block?",
+        code: ".etiqueta {\n  display: inline-block;\n  width: 120px;\n}",
+        options: ["Ocultar el elemento", "Mantenerlo en línea y permitir definir ancho y alto", "Convertirlo en una cuadrícula", "Fijarlo a la ventana"],
+        answer: 1,
+        explanation: "inline-block fluye junto a otros elementos en línea, pero permite establecer dimensiones como width y height.",
+        nextStep: "Compara display: inline, block e inline-block y observa cómo afectan el espacio y las dimensiones."
+      }
+    ].map(question => ({ ...question, id: `${question.topic}:${question.prompt}` }));
+
+    const quizLength = 5;
+    const levelNames = { 1: "Nivel inicial", 2: "Nivel intermedio", 3: "Nivel de reto" };
+    const topicIntroductions = {
+      JavaScript: "JavaScript es un lenguaje que da comportamiento e interactividad a las páginas web. En este quiz practicarás variables, funciones, tipos de datos y métodos para trabajar con arreglos.",
+      "Vue.js": "Vue.js es un framework progresivo para construir interfaces web reactivas. Aprenderás conceptos como plantillas, directivas y estado reactivo con la Composition API.",
+      CSS: "CSS define la presentación visual de una página web. En este quiz practicarás selectores, Flexbox, Grid y propiedades para dar estilo y organizar elementos."
+    };
+    const elements = {
+      intro: document.getElementById("introView"),
+      overview: document.getElementById("overview"),
+      quiz: document.getElementById("quizView"),
+      results: document.getElementById("resultView"),
+      home: document.getElementById("homeView"),
+      progressPage: document.getElementById("progressView"),
+      topicSelect: document.getElementById("topicSelect"),
+      questionCount: document.getElementById("questionCount"),
+      questionTopic: document.getElementById("questionTopic"),
+      lessonTopic: document.getElementById("lessonTopic"),
+      lessonDescription: document.getElementById("lessonDescription"),
+      progressFill: document.getElementById("progressFill"),
+      progressTrack: document.getElementById("progressTrack"),
+      questionLevel: document.getElementById("questionLevel"),
+      questionTitle: document.getElementById("questionTitle"),
+      questionCode: document.getElementById("questionCode"),
+      options: document.getElementById("options"),
+      feedback: document.getElementById("feedback"),
+      answerButton: document.getElementById("answerButton"),
+      quizHint: document.getElementById("quizHint"),
+      storageNotice: document.getElementById("storageNotice")
+    };
+
+    let quizState = null;
+    let quizHistory = [];
+    let interruptedQuestionIds = [];
+    let currentUser = null;
+    function userStorageKey(key) {
+      if (!currentUser) throw new Error("Debes iniciar sesión para acceder a tu progreso.");
+      return `codequiz:${currentUser.id}:${key}`;
+    }
+
+    const AI_ENDPOINT = "/api/assistant"; // Cambia esta ruta por el endpoint de tu backend.
+    const aiConversation = [];
+    function appendAIMessage(text, type = "assistant") {
+      const message = document.createElement("div");
+      message.className = `ai-message${type === "user" ? " user" : ""}${type === "error" ? " error" : ""}`;
+      message.textContent = text;
+      document.getElementById("aiMessages").append(message);
+      message.scrollIntoView({ block: "nearest" });
+      return message;
+    }
+
+    function appendAISources(sources) {
+      if (!Array.isArray(sources)) return;
+      const references = sources.filter(source => {
+        if (!source || typeof source.title !== "string" || typeof source.url !== "string") return false;
+        try {
+          return new URL(source.url).protocol === "https:";
+        } catch {
+          return false;
+        }
+      });
+      if (!references.length) return;
+
+      const message = document.createElement("div");
+      message.className = "ai-message ai-sources";
+      const heading = document.createElement("strong");
+      heading.textContent = "Fuentes consultadas";
+      message.append(heading);
+      references.forEach(source => {
+        const link = document.createElement("a");
+        link.href = source.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = source.title;
+        message.append(link);
+      });
+      document.getElementById("aiMessages").append(message);
+      message.scrollIntoView({ block: "nearest" });
+    }
+
+    function setAIChatOpen(isOpen) {
+      const chat = document.getElementById("aiChat");
+      const launcher = document.getElementById("aiLauncher");
+      chat.hidden = !isOpen;
+      launcher.setAttribute("aria-expanded", String(isOpen));
+      if (isOpen) document.getElementById("aiQuestion").focus();
+      else launcher.focus();
+    }
+
+    async function askAI(question) {
+      const sendButton = document.getElementById("aiSend");
+      const input = document.getElementById("aiQuestion");
+      const chat = document.getElementById("aiChat");
+      sendButton.disabled = true;
+      input.disabled = true;
+      chat.setAttribute("aria-busy", "true");
+      try {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 90000);
+        let response;
+        try {
+          response = await fetch(AI_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: question,
+              history: aiConversation.slice(-12),
+              context: {
+                subject: quizState?.current?.topic || elements.topicSelect.value,
+                currentQuestion: quizState?.current?.prompt || null
+              }
+            }),
+            signal: controller.signal
+          });
+        } finally {
+          window.clearTimeout(timeout);
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          const errorMessage = errorData?.error || (response.status === 405
+            ? "El servidor que muestra esta página rechazó la consulta. Inicia la aplicación con npm.cmd start y abre http://localhost:3000; no uses Live Server ni abras el archivo directamente."
+            : `El servicio de IA respondió con el estado ${response.status}.`);
+          throw new Error(errorMessage);
+        }
+        const data = await response.json();
+        const answer = typeof data.reply === "string" ? data.reply : data.answer;
+        if (typeof answer !== "string" || !answer.trim()) {
+          throw new Error("El servicio de IA no devolvió una respuesta válida.");
+        }
+
+        aiConversation.push(
+          { role: "user", content: question },
+          { role: "assistant", content: answer.trim() }
+        );
+        appendAIMessage(answer.trim());
+        appendAISources(data.sources);
+      } catch (error) {
+        console.error("No se pudo consultar el asistente de IA.", error);
+        const message = error.name === "AbortError"
+          ? "La consulta superó el límite de 90 segundos. Gemini puede estar lento o no disponible; espera un momento y prueba de nuevo."
+          : error instanceof TypeError
+            ? `No se pudo conectar con el servicio de IA en ${AI_ENDPOINT}. Verifica que el backend esté activo y disponible desde esta página.`
+            : error.message || "Ocurrió un error al consultar la IA. Intenta de nuevo.";
+        appendAIMessage(message, "error");
+      } finally {
+        sendButton.disabled = false;
+        input.disabled = false;
+        chat.setAttribute("aria-busy", "false");
+        input.focus();
+      }
+    }
+
+    function showStorageNotice(message) {
+      elements.storageNotice.textContent = message;
+      elements.storageNotice.hidden = false;
+    }
+
+    function setActivePage(page) {
+      const isQuizPage = page === "quizzes";
+      elements.home.classList.toggle("hidden", page !== "home");
+      elements.progressPage.classList.toggle("hidden", page !== "progress");
+      document.getElementById("contentView").classList.toggle("hidden", page !== "content");
+      document.getElementById("databaseView").classList.toggle("hidden", page !== "database");
+      elements.intro.classList.toggle("hidden", !isQuizPage || Boolean(quizState));
+      elements.overview.classList.toggle("hidden", !isQuizPage || Boolean(quizState));
+      elements.quiz.classList.toggle("hidden", !isQuizPage || !quizState || quizState.answered >= quizState.total);
+      elements.results.classList.toggle("hidden", !isQuizPage || !quizState || quizState.answered < quizState.total);
+
+      const pageDetails = {
+        home: ["Inicio", "Tu espacio para practicar desarrollo web y seguir tu avance."],
+        quizzes: ["Quizzes de programación", "Practica, descubre tus fortalezas y recibe orientación para seguir mejorando."],
+        progress: ["Mi progreso", "Consulta tus resultados y observa tu avance por tema."],
+        content: ["Contenido", "Aprende conceptos de JavaScript, Vue.js y CSS con ejemplos sencillos."],
+        database: ["Base de datos", "Consulta documentación oficial y recursos confiables para seguir aprendiendo."]
+      };
+      document.getElementById("pageTitle").textContent = pageDetails[page][0];
+      document.getElementById("pageDescription").textContent = pageDetails[page][1];
+      document.querySelectorAll(".side-link").forEach(button => {
+        const active = button.dataset.page === page;
+        button.classList.toggle("active", active);
+        if (active) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+      if (page === "progress") renderProgress();
+    }
+
+    function renderLastResult(result) {
+      if (!result) return;
+      const percentage = Math.round((result.score / result.total) * 100);
+      document.getElementById("lastAttemptCaption").textContent = "Tu práctica más reciente";
+      document.getElementById("lastScore").textContent = `${result.score}/${result.total}`;
+      document.getElementById("lastScoreLabel").textContent = "respuestas correctas";
+      document.getElementById("lastPercent").textContent = `${percentage}%`;
+      document.getElementById("lastRing").style.setProperty("--progress", `${percentage}%`);
+      document.getElementById("homeLastCaption").textContent = "Tu práctica más reciente";
+      document.getElementById("homeLastScore").textContent = `${result.score}/${result.total}`;
+      document.getElementById("homeLastScoreLabel").textContent = "respuestas correctas";
+      document.getElementById("homeLastPercent").textContent = `${percentage}%`;
+      document.getElementById("homeLastRing").style.setProperty("--progress", `${percentage}%`);
+    }
+
+    function loadLastResult() {
+      try {
+        const history = localStorage.getItem(userStorageKey("history"));
+        if (history) {
+          const parsedHistory = JSON.parse(history);
+          if (!Array.isArray(parsedHistory)) throw new Error("El historial guardado no es válido.");
+          quizHistory = parsedHistory.filter(result =>
+            Number.isInteger(result.score) &&
+            Number.isInteger(result.total) &&
+            result.total > 0 &&
+            result.score >= 0 &&
+            result.score <= result.total
+          ).map(result => ({
+            ...result,
+            questionIds: Array.isArray(result.questionIds) ? result.questionIds.filter(id => typeof id === "string") : []
+          }));
+        }
+
+        const interrupted = localStorage.getItem(userStorageKey("active-question-ids"));
+        if (interrupted) {
+          const parsedIds = JSON.parse(interrupted);
+          if (!Array.isArray(parsedIds)) throw new Error("Las preguntas recientes guardadas no son válidas.");
+          interruptedQuestionIds = parsedIds.filter(id => typeof id === "string");
+        }
+
+        const saved = localStorage.getItem(userStorageKey("last-result"));
+        if (!quizHistory.length && saved) {
+          const result = JSON.parse(saved);
+          if (!Number.isInteger(result.score) || !Number.isInteger(result.total) || result.total < 1) {
+            throw new Error("El resultado guardado no tiene un formato válido.");
+          }
+          quizHistory = [result];
+        }
+        if (quizHistory.length) {
+          renderLastResult(quizHistory[quizHistory.length - 1]);
+        }
+      } catch (error) {
+        showStorageNotice("No se pudo recuperar tu historial anterior. Aún puedes realizar quizzes normalmente.");
+      }
+    }
+
+    function saveLastResult() {
+      const result = {
+        score: quizState.score,
+        total: quizState.total,
+        date: new Date().toISOString(),
+        topics: quizState.topicResults,
+        questionIds: quizState.used.map(question => question.id)
+      };
+      quizHistory.push(result);
+      quizHistory = quizHistory.slice(-20);
+      renderLastResult(result);
+      try {
+        localStorage.setItem(userStorageKey("history"), JSON.stringify(quizHistory));
+        localStorage.setItem(userStorageKey("last-result"), JSON.stringify(result));
+        localStorage.removeItem(userStorageKey("active-question-ids"));
+        interruptedQuestionIds = [];
+      } catch (error) {
+        showStorageNotice("El quiz terminó, pero el navegador no permitió guardar tu historial.");
+      }
+    }
+
+    function renderProgress() {
+      const attempts = quizHistory.length;
+      const average = attempts
+        ? Math.round(quizHistory.reduce((sum, result) => sum + result.score / result.total, 0) / attempts * 100)
+        : 0;
+      const best = attempts
+        ? Math.max(...quizHistory.map(result => Math.round(result.score / result.total * 100)))
+        : null;
+      document.getElementById("progressAttempts").textContent = String(attempts);
+      document.getElementById("progressAverage").textContent = `${average}%`;
+      document.getElementById("progressBest").textContent = best === null ? "—" : `${best}%`;
+
+      const topics = {};
+      quizHistory.forEach(result => {
+        Object.entries(result.topics || {}).forEach(([topic, data]) => {
+          if (!topics[topic]) topics[topic] = { correct: 0, total: 0 };
+          topics[topic].correct += data.correct;
+          topics[topic].total += data.total;
+        });
+      });
+      const topicContainer = document.getElementById("progressTopics");
+      topicContainer.replaceChildren();
+      const topicNames = ["JavaScript", "Vue.js", "CSS"];
+      topicNames.forEach(topic => {
+        const data = topics[topic];
+        const percentage = data ? Math.round(data.correct / data.total * 100) : 0;
+        const row = document.createElement("div");
+        row.className = "progress-topic";
+        const label = document.createElement("span");
+        label.textContent = topic;
+        const track = document.createElement("div");
+        track.className = "topic-progress-track";
+        track.setAttribute("role", "progressbar");
+        track.setAttribute("aria-label", `Aciertos en ${topic}`);
+        track.setAttribute("aria-valuemin", "0");
+        track.setAttribute("aria-valuemax", "100");
+        track.setAttribute("aria-valuenow", String(percentage));
+        const fill = document.createElement("div");
+        fill.className = "topic-progress-fill";
+        fill.style.width = `${percentage}%`;
+        track.append(fill);
+        const count = document.createElement("strong");
+        count.textContent = data ? `${percentage}% (${data.correct}/${data.total})` : "Sin intentos";
+        row.append(label, track, count);
+        topicContainer.append(row);
+      });
+
+      const attemptList = document.getElementById("attemptList");
+      attemptList.replaceChildren();
+      if (!attempts) {
+        const empty = document.createElement("div");
+        empty.className = "progress-empty";
+        empty.textContent = "Aún no hay quizzes completados. Inicia una práctica para ver tus resultados aquí.";
+        attemptList.append(empty);
+        return;
+      }
+      quizHistory.slice().reverse().forEach(result => {
+        const item = document.createElement("div");
+        item.className = "attempt-item";
+        const date = document.createElement("span");
+        const parsedDate = new Date(result.date);
+        date.textContent = Number.isNaN(parsedDate.getTime())
+          ? "Quiz completado"
+          : parsedDate.toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
+        const score = document.createElement("strong");
+        score.textContent = `${result.score}/${result.total} · ${Math.round(result.score / result.total * 100)}%`;
+        item.append(date, score);
+        attemptList.append(item);
+      });
+    }
+
+    function startQuiz(filter, focusOnly = false) {
+      const selectedTopic = filter || elements.topicSelect.value;
+      let allowedTopics = selectedTopic === "all" ? null : [selectedTopic];
+      if (focusOnly && quizState) {
+        const missedTopics = Object.keys(quizState.mistakes);
+        allowedTopics = missedTopics.length ? missedTopics : null;
+      }
+
+      const available = questionBank.filter(question => !allowedTopics || allowedTopics.includes(question.topic));
+      const total = Math.min(quizLength, available.length);
+      quizState = {
+        filter: allowedTopics,
+        total,
+        answered: 0,
+        score: 0,
+        difficulty: 2,
+        used: [],
+        mistakes: {},
+        topicResults: {},
+        recentQuestionIds: [...new Set([
+          ...(quizHistory.length ? quizHistory[quizHistory.length - 1].questionIds || [] : []),
+          ...interruptedQuestionIds
+        ])],
+        current: null,
+        selected: null,
+        checked: false
+      };
+      interruptedQuestionIds = [];
+      try {
+        localStorage.removeItem(userStorageKey("active-question-ids"));
+      } catch (error) {
+        showStorageNotice("El navegador no permitió actualizar las preguntas recientes.");
+      }
+      setActivePage("quizzes");
+      showNextQuestion();
+    }
+
+    function chooseQuestion() {
+      const candidates = questionBank.filter(question =>
+        !quizState.used.includes(question) &&
+        (!quizState.filter || quizState.filter.includes(question.topic))
+      );
+      const unseen = candidates.filter(question => !quizState.recentQuestionIds.includes(question.id));
+      const pool = unseen.length ? unseen : candidates;
+      const nearestDistance = Math.min(...pool.map(question => Math.abs(question.difficulty - quizState.difficulty)));
+      const nearest = pool.filter(question => Math.abs(question.difficulty - quizState.difficulty) === nearestDistance);
+      return nearest[Math.floor(Math.random() * nearest.length)];
+    }
+
+    function showNextQuestion() {
+      quizState.current = chooseQuestion();
+      quizState.selected = null;
+      quizState.checked = false;
+      const question = quizState.current;
+      quizState.used.push(question);
+      interruptedQuestionIds = quizState.used.map(usedQuestion => usedQuestion.id);
+      try {
+        localStorage.setItem(userStorageKey("active-question-ids"), JSON.stringify(interruptedQuestionIds));
+      } catch (error) {
+        showStorageNotice("No se pudieron guardar las preguntas mostradas para evitar repetirlas si sales del quiz.");
+      }
+      elements.questionCount.textContent = `Pregunta ${quizState.answered + 1} de ${quizState.total}`;
+      elements.questionTopic.textContent = question.topic;
+      elements.lessonTopic.textContent = question.topic;
+      elements.lessonDescription.textContent = topicIntroductions[question.topic];
+      elements.questionLevel.textContent = levelNames[question.difficulty];
+      elements.questionTitle.textContent = question.prompt;
+      elements.questionCode.textContent = question.code;
+      elements.questionCode.classList.toggle("hidden", !question.code);
+      elements.options.replaceChildren();
+      elements.feedback.hidden = true;
+      elements.feedback.className = "feedback";
+      elements.answerButton.disabled = true;
+      elements.answerButton.textContent = "Comprobar respuesta";
+      elements.quizHint.textContent = "Selecciona la respuesta que consideres correcta.";
+
+      question.options.forEach((option, index) => {
+        const button = document.createElement("button");
+        button.className = "option";
+        button.type = "button";
+        button.setAttribute("aria-pressed", "false");
+        button.innerHTML = `<span class="option-letter">${String.fromCharCode(65 + index)}</span><span class="option-copy"></span>`;
+        button.querySelector(".option-copy").textContent = option;
+        button.addEventListener("click", () => selectAnswer(index));
+        elements.options.append(button);
+      });
+
+      const progress = Math.round((quizState.answered / quizState.total) * 100);
+      elements.progressFill.style.width = `${progress}%`;
+      elements.progressTrack.setAttribute("aria-valuenow", String(progress));
+    }
+
+    function selectAnswer(index) {
+      if (quizState.selected !== null) return;
+      quizState.selected = index;
+      const buttons = [...elements.options.children];
+      buttons.forEach((button, optionIndex) => {
+        button.setAttribute("aria-pressed", String(optionIndex === index));
+        if (optionIndex === index) button.style.borderColor = "#8b80e6";
+      });
+      elements.answerButton.disabled = false;
+      elements.quizHint.textContent = "Cuando estés listo, comprueba tu respuesta.";
+    }
+
+    function checkAnswer() {
+      if (quizState.selected === null || quizState.checked) return;
+      const question = quizState.current;
+      const isCorrect = quizState.selected === question.answer;
+      quizState.checked = true;
+      const buttons = [...elements.options.children];
+      buttons.forEach((button, index) => {
+        button.disabled = true;
+        if (index === question.answer) button.classList.add("correct");
+        if (index === quizState.selected && !isCorrect) button.classList.add("incorrect");
+      });
+
+      quizState.answered += 1;
+      if (!quizState.topicResults[question.topic]) {
+        quizState.topicResults[question.topic] = { correct: 0, total: 0 };
+      }
+      quizState.topicResults[question.topic].total += 1;
+      if (isCorrect) {
+        quizState.score += 1;
+        quizState.topicResults[question.topic].correct += 1;
+        quizState.difficulty = Math.min(3, quizState.difficulty + 1);
+        elements.feedback.className = "feedback good";
+        elements.feedback.innerHTML = `<h3>¡Correcto! Vas por buen camino.</h3><p></p>`;
+      } else {
+        quizState.difficulty = Math.max(1, quizState.difficulty - 1);
+        quizState.mistakes[question.topic] = (quizState.mistakes[question.topic] || 0) + 1;
+        elements.feedback.className = "feedback needs-work";
+        elements.feedback.innerHTML = `<h3>No pasa nada: cada error es una pista para aprender.</h3><p></p><p class="next-step"><strong>Para reforzar:</strong> ${question.nextStep}</p>`;
+      }
+      elements.feedback.querySelector("p").textContent = isCorrect
+        ? question.explanation
+        : `La respuesta correcta es «${question.options[question.answer]}». ${question.explanation}`;
+      elements.feedback.hidden = false;
+      elements.answerButton.disabled = false;
+      elements.answerButton.textContent = quizState.answered >= quizState.total ? "Ver resultados" : "Siguiente pregunta";
+      elements.quizHint.textContent = isCorrect ? "La siguiente pregunta se ajustará a tu avance." : "El quiz ajustará el reto para ayudarte a practicar.";
+
+      const progress = Math.round((quizState.answered / quizState.total) * 100);
+      elements.progressFill.style.width = `${progress}%`;
+      elements.progressTrack.setAttribute("aria-valuenow", String(progress));
+    }
+
+    function advanceQuiz() {
+      if (!quizState.checked) {
+        checkAnswer();
+        return;
+      }
+      if (quizState.answered >= quizState.total) {
+        showResults();
+        return;
+      }
+      showNextQuestion();
+    }
+
+    function showResults() {
+      const { score, total, mistakes } = quizState;
+      setActivePage("quizzes");
+      const percentage = Math.round((score / total) * 100);
+      document.getElementById("finalScore").textContent = `${score}/${total}`;
+      document.getElementById("scoreRing").style.setProperty("--score", `${percentage}%`);
+      document.getElementById("resultSummary").textContent =
+        `${percentage}% de aciertos · ${score === total ? "Dominaste todas las preguntas de esta ruta." : "Revisa la retroalimentación y sigue practicando a tu ritmo."}`;
+
+      const weakList = document.getElementById("weakList");
+      weakList.replaceChildren();
+      const weakTopics = Object.entries(mistakes).sort((a, b) => b[1] - a[1]);
+      if (!weakTopics.length) {
+        const message = document.createElement("p");
+        message.className = "empty-weak";
+        message.textContent = "¡Sin errores en esta ruta! Puedes probar un tema nuevo o aumentar el reto.";
+        weakList.append(message);
+      } else {
+        weakTopics.forEach(([topic, count]) => {
+          const item = document.createElement("div");
+          item.className = "weak-item";
+          const label = document.createElement("span");
+          label.textContent = topic;
+          const totalInTopic = quizState.used.filter(question => question.topic === topic).length;
+          const errors = document.createElement("strong");
+          errors.textContent = `${count} error${count === 1 ? "" : "es"} de ${totalInTopic}`;
+          item.append(label, errors);
+          weakList.append(item);
+        });
+      }
+
+      document.getElementById("recommendation").textContent = weakTopics.length
+        ? `Te recomendamos practicar ${weakTopics.map(([topic]) => topic.toLowerCase()).join(" y ")}. En cada pregunta recibiste una explicación y una sugerencia concreta para corregir el concepto.`
+        : "Tuviste un gran resultado. Elige otro tema para seguir practicando o vuelve a la ruta adaptativa para enfrentarte a preguntas más retadoras.";
+      document.getElementById("reinforceButton").disabled = !weakTopics.length;
+      document.getElementById("reinforceButton").style.opacity = weakTopics.length ? "1" : ".55";
+      saveLastResult();
+    }
+
+    function returnToIntro() {
+      quizState = null;
+      setActivePage("quizzes");
+    }
+
+    document.getElementById("startButton").addEventListener("click", () => startQuiz());
+    elements.answerButton.addEventListener("click", advanceQuiz);
+    document.getElementById("againButton").addEventListener("click", returnToIntro);
+    document.getElementById("reinforceButton").addEventListener("click", () => startQuiz(null, true));
+    document.getElementById("homeStartButton").addEventListener("click", () => setActivePage("quizzes"));
+    document.querySelectorAll(".side-link").forEach(button => {
+      button.addEventListener("click", () => setActivePage(button.dataset.page));
+    });
+    document.getElementById("aiLauncher").addEventListener("click", () => setAIChatOpen(true));
+    document.getElementById("aiClose").addEventListener("click", () => setAIChatOpen(false));
+    document.getElementById("aiChatForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const input = document.getElementById("aiQuestion");
+      const question = input.value.trim();
+      if (!question || document.getElementById("aiSend").disabled) return;
+      appendAIMessage(question, "user");
+      input.value = "";
+      askAI(question);
+    });
+    document.getElementById("aiQuestion").addEventListener("keydown", event => {
+      if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+        event.preventDefault();
+        document.getElementById("aiChatForm").requestSubmit();
+      }
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !document.getElementById("aiChat").hidden) {
+        setAIChatOpen(false);
+      }
+    });
+
+    const authForm = document.getElementById("authForm");
+    const authNotice = document.getElementById("authNotice");
+    const authModeContent = {
+      login: {
+        title: "Inicia sesión",
+        description: "Ingresa con tu usuario o correo y contraseña.",
+        submit: "Iniciar sesión"
+      },
+      register: {
+        title: "Crea tu cuenta",
+        description: "Regístrate para guardar tu progreso en este dispositivo.",
+        submit: "Crear cuenta"
+      },
+      forgot: {
+        title: "Recupera tu contraseña",
+        description: "Te enviaremos un enlace al correo asociado a tu cuenta.",
+        submit: "Enviar enlace"
+      },
+      reset: {
+        title: "Crea una contraseña nueva",
+        description: "Elige una contraseña de al menos 8 caracteres.",
+        submit: "Guardar contraseña"
+      }
+    };
+
+    function setAuthNotice(message = "", isError = false) {
+      authNotice.textContent = message;
+      authNotice.classList.toggle("error", isError);
+      authNotice.hidden = !message;
+    }
+
+    function setAuthMode(mode, message = "", isError = false) {
+      const settings = authModeContent[mode];
+      document.getElementById("authTitle").textContent = settings.title;
+      document.getElementById("authDescription").textContent = settings.description;
+      document.getElementById("authSubmit").innerHTML = `${settings.submit} <span aria-hidden="true">→</span>`;
+      document.getElementById("authNameGroup").hidden = mode !== "register";
+      document.getElementById("authUsernameGroup").hidden = mode !== "register";
+      document.getElementById("authIdentifierGroup").hidden = mode !== "login";
+      document.getElementById("authEmailGroup").hidden = mode !== "register" && mode !== "forgot";
+      document.getElementById("authRoleGroup").hidden = mode !== "register";
+      document.getElementById("authInviteGroup").hidden = mode !== "register" || document.getElementById("authRole").value !== "teacher";
+      document.getElementById("authPasswordGroup").hidden = mode === "forgot";
+      document.getElementById("authConfirmGroup").hidden = mode !== "register" && mode !== "reset";
+      document.getElementById("authSwitchButton").hidden = mode === "forgot" || mode === "reset";
+      document.getElementById("authSwitchButton").textContent = mode === "register" ? "Ya tengo una cuenta" : "Crear una cuenta";
+      document.getElementById("authForgotButton").hidden = mode !== "login";
+      document.getElementById("authBackButton").hidden = mode !== "forgot" && mode !== "reset";
+      document.getElementById("authIdentifier").required = mode === "login";
+      document.getElementById("authName").required = mode === "register";
+      document.getElementById("authUsername").required = mode === "register";
+      document.getElementById("authEmail").required = mode === "register" || mode === "forgot";
+      document.getElementById("authRole").required = mode === "register";
+      document.getElementById("authInviteCode").required = mode === "register" && document.getElementById("authRole").value === "teacher";
+      document.getElementById("authPassword").required = mode === "login" || mode === "register" || mode === "reset";
+      document.getElementById("authPassword").autocomplete = mode === "login" ? "current-password" : "new-password";
+      document.getElementById("authConfirmPassword").required = mode === "register" || mode === "reset";
+      authForm.dataset.mode = mode;
+      setAuthNotice(message, isError);
+    }
+
+    async function postAuth(path, payload) {
+      const response = await fetch(`/api/auth/${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `No se pudo completar la solicitud (HTTP ${response.status}).`);
+      return data;
+    }
+
+    function showSignedInUser(user) {
+      currentUser = user;
+      document.getElementById("authPassword").value = "";
+      document.getElementById("authConfirmPassword").value = "";
+      document.getElementById("authInviteCode").value = "";
+      document.getElementById("signedInName").textContent = user.name;
+      document.getElementById("signedInRole").textContent = user.role === "teacher" ? "Docente" : "Estudiante";
+      document.getElementById("signedInAvatar").textContent = user.name.trim().charAt(0).toLocaleUpperCase("es");
+      document.getElementById("authScreen").hidden = true;
+      document.getElementById("appShell").hidden = false;
+      quizHistory = [];
+      interruptedQuestionIds = [];
+      loadLastResult();
+      setActivePage("quizzes");
+    }
+
+    function clearSignedInUser() {
+      currentUser = null;
+      quizHistory = [];
+      interruptedQuestionIds = [];
+      quizState = null;
+      aiConversation.length = 0;
+      document.getElementById("aiMessages").replaceChildren();
+      appendAIMessage("¡Hola! Puedo ayudarte con programación, lenguajes, algoritmos, bases de datos y desarrollo web. Buscaré referencias en línea para respaldar mis respuestas.");
+      document.getElementById("aiChat").hidden = true;
+      document.getElementById("appShell").hidden = true;
+      document.getElementById("authScreen").hidden = false;
+      document.getElementById("authIdentifier").value = "";
+      document.getElementById("authPassword").value = "";
+      document.getElementById("authConfirmPassword").value = "";
+      document.getElementById("authInviteCode").value = "";
+      setAuthMode("login", "Has cerrado sesión.");
+    }
+
+    document.getElementById("authSwitchButton").addEventListener("click", () => {
+      setAuthMode(authForm.dataset.mode === "register" ? "login" : "register");
+    });
+    document.getElementById("authForgotButton").addEventListener("click", () => {
+      document.getElementById("authEmail").value = document.getElementById("authIdentifier").value.includes("@")
+        ? document.getElementById("authIdentifier").value
+        : "";
+      document.getElementById("authPassword").value = "";
+      setAuthMode("forgot");
+    });
+    document.getElementById("authBackButton").addEventListener("click", () => {
+      setAuthMode("login");
+      const resetUrl = new URL(window.location.href);
+      resetUrl.search = "";
+      window.history.replaceState({}, "", resetUrl);
+    });
+    document.getElementById("authRole").addEventListener("change", () => {
+      const showInvite = authForm.dataset.mode === "register" && document.getElementById("authRole").value === "teacher";
+      document.getElementById("authInviteGroup").hidden = !showInvite;
+      document.getElementById("authInviteCode").required = showInvite;
+    });
+
+    authForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const mode = authForm.dataset.mode;
+      const submit = document.getElementById("authSubmit");
+      submit.disabled = true;
+      setAuthNotice("");
+      try {
+        const password = document.getElementById("authPassword").value;
+        if ((mode === "register" || mode === "reset") &&
+          password !== document.getElementById("authConfirmPassword").value) {
+          throw new Error("Las contraseñas no coinciden.");
+        }
+        if (mode === "login") {
+          const data = await postAuth("login", {
+            identifier: document.getElementById("authIdentifier").value,
+            password
+          });
+          showSignedInUser(data.user);
+        } else if (mode === "register") {
+          const data = await postAuth("register", {
+            name: document.getElementById("authName").value,
+            username: document.getElementById("authUsername").value,
+            email: document.getElementById("authEmail").value,
+            password,
+            role: document.getElementById("authRole").value,
+            inviteCode: document.getElementById("authInviteCode").value
+          });
+          showSignedInUser(data.user);
+        } else if (mode === "forgot") {
+          const data = await postAuth("forgot-password", { email: document.getElementById("authEmail").value });
+          setAuthMode("forgot", data.message);
+        } else {
+          const parameters = new URLSearchParams(window.location.search);
+          const data = await postAuth("reset-password", {
+            email: parameters.get("email") || "",
+            token: parameters.get("reset") || "",
+            password
+          });
+          const resetUrl = new URL(window.location.href);
+          resetUrl.search = "";
+          window.history.replaceState({}, "", resetUrl);
+          document.getElementById("authPassword").value = "";
+          document.getElementById("authConfirmPassword").value = "";
+          setAuthMode("login", data.message);
+        }
+      } catch (error) {
+        setAuthNotice(error.message || "Ocurrió un error. Inténtalo de nuevo.", true);
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      const button = document.getElementById("logoutButton");
+      button.disabled = true;
+      try {
+        await postAuth("logout", {});
+        clearSignedInUser();
+      } catch (error) {
+        showStorageNotice(error.message || "No se pudo cerrar la sesión.");
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    async function restoreSession() {
+      const parameters = new URLSearchParams(window.location.search);
+      const resetToken = parameters.get("reset");
+      const resetEmail = parameters.get("email");
+      if (resetToken && resetEmail) {
+        document.getElementById("authEmail").value = resetEmail;
+        setAuthMode("reset", "El enlace de recuperación es de un solo uso y vence en 30 minutos.");
+      } else {
+        setAuthMode("login");
+      }
+      try {
+        const response = await fetch("/api/auth/session");
+        if (!response.ok) throw new Error(`No se pudo comprobar la sesión (HTTP ${response.status}).`);
+        const data = await response.json();
+        if (data.user && !(resetToken && resetEmail)) showSignedInUser(data.user);
+      } catch (error) {
+        setAuthNotice(error.message || "No se pudo conectar con el servidor.", true);
+      }
+    }
+
+    restoreSession();
+  </script>
+</body>
+</html>

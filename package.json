@@ -1,0 +1,15 @@
+{
+  "name": "codequiz-ia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prototipo educativo CodeQuiz IA con asistente de programación",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "nodemailer": "^10.2.1"
+  }
+}
