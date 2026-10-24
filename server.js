@@ -10,6 +10,7 @@ const nodemailer = require("nodemailer");
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, ".data");
 const USERS_PATH = path.join(DATA_DIR, "users.json");
+const ATTEMPTS_PATH = path.join(DATA_DIR, "quiz-attempts.json");
 const SESSION_SECRET_PATH = path.join(DATA_DIR, "session-secret");
 const REQUEST_LIMIT_BYTES = 16 * 1024;
 const MAX_MESSAGE_LENGTH = 2000;
@@ -68,6 +69,18 @@ try {
 }
 if (!Array.isArray(users)) {
   throw new Error("El archivo .data/users.json no contiene una lista de cuentas válida.");
+}
+if (!fs.existsSync(ATTEMPTS_PATH)) {
+  fs.writeFileSync(ATTEMPTS_PATH, "[]\n", { mode: 0o600, flag: "wx" });
+}
+let quizAttempts;
+try {
+  quizAttempts = JSON.parse(fs.readFileSync(ATTEMPTS_PATH, "utf8"));
+} catch {
+  throw new Error("No se pudieron leer los resultados locales de .data/quiz-attempts.json.");
+}
+if (!Array.isArray(quizAttempts)) {
+  throw new Error("El archivo .data/quiz-attempts.json no contiene una lista de resultados válida.");
 }
 
 const knowledgeBase = [
@@ -339,6 +352,12 @@ function saveUsers() {
   const temporaryPath = `${USERS_PATH}.${process.pid}.tmp`;
   fs.writeFileSync(temporaryPath, `${JSON.stringify(users, null, 2)}\n`, { mode: 0o600 });
   fs.renameSync(temporaryPath, USERS_PATH);
+}
+
+function saveQuizAttempts() {
+  const temporaryPath = `${ATTEMPTS_PATH}.${process.pid}.tmp`;
+  fs.writeFileSync(temporaryPath, `${JSON.stringify(quizAttempts, null, 2)}\n`, { mode: 0o600 });
+  fs.renameSync(temporaryPath, ATTEMPTS_PATH);
 }
 
 function safeUser(user) {
@@ -880,6 +899,79 @@ async function handleAssistant(request, response) {
   }
 }
 
+function validateQuizAttempt(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return { error: "El resultado del quiz no tiene un formato válido." };
+  }
+  const { id, score, total, topics, wrongAnswers } = payload;
+  if (typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id)) {
+    return { error: "El identificador del intento no es válido." };
+  }
+  if (!Number.isInteger(score) || !Number.isInteger(total) || total < 1 || total > 5 || score < 0 || score > total) {
+    return { error: "El puntaje del quiz no es válido." };
+  }
+  if (!topics || typeof topics !== "object" || Array.isArray(topics)) {
+    return { error: "El resumen por tema no es válido." };
+  }
+  const topicNames = new Set(["JavaScript", "Vue.js", "CSS"]);
+  const topicEntries = Object.entries(topics);
+  if (!topicEntries.length || topicEntries.some(([topic, result]) =>
+    !topicNames.has(topic) ||
+    !result ||
+    !Number.isInteger(result.correct) ||
+    !Number.isInteger(result.total) ||
+    result.total < 1 ||
+    result.correct < 0 ||
+    result.correct > result.total
+  )) {
+    return { error: "El resumen por tema no es válido." };
+  }
+  const topicTotals = topicEntries.reduce((sum, [, result]) => ({
+    correct: sum.correct + result.correct,
+    total: sum.total + result.total
+  }), { correct: 0, total: 0 });
+  if (topicTotals.correct !== score || topicTotals.total !== total) {
+    return { error: "El puntaje no coincide con el resumen por tema." };
+  }
+  if (!Array.isArray(wrongAnswers) || wrongAnswers.length !== total - score || wrongAnswers.some(item =>
+    !item ||
+    typeof item !== "object" ||
+    Array.isArray(item) ||
+    !topicNames.has(item.topic) ||
+    typeof item.prompt !== "string" ||
+    !item.prompt.trim() ||
+    item.prompt.length > 500 ||
+    typeof item.selectedAnswer !== "string" ||
+    !item.selectedAnswer.trim() ||
+    item.selectedAnswer.length > 500 ||
+    typeof item.correctAnswer !== "string" ||
+    !item.correctAnswer.trim() ||
+    item.correctAnswer.length > 500 ||
+    typeof item.nextStep !== "string" ||
+    item.nextStep.length > 1000
+  )) {
+    return { error: "Los detalles de las respuestas incorrectas no son válidos." };
+  }
+  return {
+    attempt: {
+      id,
+      score,
+      total,
+      topics: Object.fromEntries(topicEntries.map(([topic, result]) => [
+        topic,
+        { correct: result.correct, total: result.total }
+      ])),
+      wrongAnswers: wrongAnswers.map(item => ({
+        topic: item.topic,
+        prompt: item.prompt.trim(),
+        selectedAnswer: item.selectedAnswer.trim(),
+        correctAnswer: item.correctAnswer.trim(),
+        nextStep: item.nextStep.trim()
+      }))
+    }
+  };
+}
+
 async function routeRequest(request, response) {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
 
@@ -899,6 +991,100 @@ async function routeRequest(request, response) {
       return;
     }
     await handleAssistant(request, response);
+    return;
+  }
+
+  if (url.pathname === "/api/quiz-attempts" || url.pathname === "/api/teacher/progress") {
+    const user = getSessionUser(request);
+    if (!user) {
+      sendJson(response, 401, { error: "Inicia sesión para acceder a los resultados." });
+      return;
+    }
+    if (url.pathname === "/api/teacher/progress") {
+      if (request.method !== "GET") {
+        sendJson(response, 405, { error: "Este endpoint solo acepta solicitudes GET." }, { Allow: "GET" });
+        return;
+      }
+      if (user.role !== "teacher") {
+        sendJson(response, 403, { error: "Solo las cuentas docentes pueden consultar el seguimiento de estudiantes." });
+        return;
+      }
+      const students = users
+        .filter(student => student.role === "student")
+        .map(student => ({
+          name: student.name,
+          username: student.username,
+          attempts: quizAttempts
+            .filter(attempt => attempt.userId === student.id)
+            .sort((left, right) => right.date.localeCompare(left.date))
+            .map(({ id, date, score, total, topics, wrongAnswers }) => ({
+              id,
+              date,
+              score,
+              total,
+              topics,
+              wrongAnswers
+            }))
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name, "es"));
+      sendJson(response, 200, { students });
+      return;
+    }
+    if (request.method !== "POST") {
+      sendJson(response, 405, { error: "Este endpoint solo acepta solicitudes POST." }, { Allow: "POST" });
+      return;
+    }
+    if (user.role !== "student") {
+      sendJson(response, 403, { error: "Solo las cuentas de estudiante pueden guardar intentos de quiz." });
+      return;
+    }
+    const origin = request.headers.origin;
+    if (origin) {
+      let originUrl;
+      try {
+        originUrl = new URL(origin);
+      } catch {
+        sendJson(response, 403, { error: "El origen de la solicitud no es válido." });
+        return;
+      }
+      const expectedProtocol = request.socket.encrypted || process.env.COOKIE_SECURE === "true" ? "https:" : "http:";
+      if (originUrl.host !== request.headers.host || originUrl.protocol !== expectedProtocol) {
+        sendJson(response, 403, { error: "La solicitud debe originarse desde esta aplicación." });
+        return;
+      }
+    }
+    if (!(request.headers["content-type"] || "").toLowerCase().startsWith("application/json")) {
+      sendJson(response, 415, { error: "Envía el resultado como JSON." });
+      return;
+    }
+    let payload;
+    try {
+      payload = await readJsonBody(request);
+    } catch (error) {
+      sendJson(response, error.status || 400, { error: error.message || "No se pudo leer el resultado." });
+      return;
+    }
+    const validated = validateQuizAttempt(payload);
+    if (validated.error) {
+      sendJson(response, 400, { error: validated.error });
+      return;
+    }
+    const existing = quizAttempts.find(attempt => attempt.id === validated.attempt.id);
+    if (existing) {
+      if (existing.userId !== user.id) {
+        sendJson(response, 409, { error: "El identificador del intento ya está en uso." });
+        return;
+      }
+      sendJson(response, 200, { success: true });
+      return;
+    }
+    quizAttempts.push({
+      ...validated.attempt,
+      userId: user.id,
+      date: new Date().toISOString()
+    });
+    saveQuizAttempts();
+    sendJson(response, 201, { success: true });
     return;
   }
 

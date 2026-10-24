@@ -372,6 +372,23 @@
     .attempt-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; background: #29251f; border: 1px solid #4b3b25; border-radius: 10px; font-size: 12px; }
     .attempt-item span { color: var(--muted); }
     .attempt-item strong { color: #ef9fae; }
+    .teacher-status { margin: 0; color: #ffdfaa; font-size: 13px; }
+    .teacher-status:empty { display: none; }
+    .teacher-student-list { display: grid; gap: 14px; }
+    .teacher-student-card { padding: 20px; }
+    .teacher-student-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 14px; }
+    .teacher-student-heading h3 { margin: 0; color: #ef9fae; font-size: 16px; }
+    .teacher-student-heading span, .teacher-attempt-topline span { color: #d4c9b7; font-size: 11px; }
+    .teacher-attempt-list { display: grid; gap: 10px; }
+    .teacher-attempt { padding: 13px; background: #29251f; border: 1px solid #4b3b25; border-radius: 10px; }
+    .teacher-attempt-topline { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; }
+    .teacher-attempt-topline strong { color: #ffdfaa; font-size: 13px; }
+    .teacher-attempt-topics { margin: 7px 0 0; color: #d4c9b7; font-size: 11px; }
+    .teacher-errors { display: grid; gap: 7px; margin: 11px 0 0; padding: 0; list-style: none; }
+    .teacher-error { padding: 10px; color: #f5f0e8; background: #3d2024; border: 1px solid #783e47; border-radius: 8px; font-size: 12px; }
+    .teacher-error strong { color: #ef9fae; }
+    .teacher-error p { margin: 5px 0 0; color: #e4d9c8; line-height: 1.5; }
+    .teacher-no-errors { margin: 10px 0 0; color: #d4d16a; font-size: 12px; }
     .progress-empty { padding: 18px; color: var(--muted); background: #29251f; border: 1px dashed #66512e; border-radius: 10px; font-size: 13px; }
     .learning-content { display: grid; gap: 16px; }
     .learning-card, .resource-card { padding: 21px; }
@@ -709,7 +726,7 @@
       width: 100%;
       min-height: 43px;
       padding: 10px 12px;
-      color: var(--ink);
+      color: #20213a;
       background: white;
       border: 1px solid #dfe0e9;
       border-radius: 10px;
@@ -857,6 +874,7 @@
         <button class="side-link" type="button" data-page="home"><span class="side-icon" aria-hidden="true">⌂</span> Inicio</button>
         <button class="side-link active" type="button" data-page="quizzes" aria-current="page"><span class="side-icon" aria-hidden="true">▣</span> Quizzes</button>
         <button class="side-link" type="button" data-page="progress"><span class="side-icon" aria-hidden="true">▥</span> Mi progreso</button>
+        <button class="side-link" id="teacherNav" type="button" data-page="teacher" hidden><span class="side-icon" aria-hidden="true">▤</span> Seguimiento docente</button>
         <button class="side-link" type="button" data-page="content"><span class="side-icon" aria-hidden="true">▤</span> Contenido</button>
         <button class="side-link" type="button" data-page="database"><span class="side-icon" aria-hidden="true">⌕</span> Base de datos</button>
         <div class="sidebar-note">
@@ -906,7 +924,7 @@
           <article class="card progress-panel">
             <div class="eyebrow">Seguimiento de aprendizaje</div>
             <h2>Mi progreso</h2>
-            <p>Consulta tus intentos y reconoce qué temas has practicado más.</p>
+            <p>Consulta tus intentos y reconoce qué temas has practicado más. Los docentes registrados también pueden revisar tus puntajes, errores y temas por reforzar.</p>
           </article>
           <div class="progress-stats" aria-label="Estadísticas generales">
             <article class="card progress-stat"><span>Quizzes completados</span><strong id="progressAttempts">0</strong></article>
@@ -921,6 +939,16 @@
             <h3>Intentos recientes</h3>
             <div class="attempt-list" id="attemptList"></div>
           </article>
+        </section>
+
+        <section class="progress-view hidden" id="teacherView" aria-label="Seguimiento docente">
+          <article class="card progress-panel">
+            <div class="eyebrow">Seguimiento de estudiantes</div>
+            <h2>Resultados y respuestas falladas</h2>
+            <p>Consulta los intentos, puntajes y temas que los estudiantes pueden reforzar.</p>
+          </article>
+          <p class="teacher-status" id="teacherStatus" role="status" aria-live="polite"></p>
+          <div class="teacher-student-list" id="teacherStudentList"></div>
         </section>
 
         <section class="learning-content hidden" id="contentView" aria-label="Contenido de aprendizaje">
@@ -1449,6 +1477,7 @@ const contador = ref(0);
       results: document.getElementById("resultView"),
       home: document.getElementById("homeView"),
       progressPage: document.getElementById("progressView"),
+      teacherPage: document.getElementById("teacherView"),
       topicSelect: document.getElementById("topicSelect"),
       questionCount: document.getElementById("questionCount"),
       questionTopic: document.getElementById("questionTopic"),
@@ -1470,6 +1499,7 @@ const contador = ref(0);
     let quizHistory = [];
     let interruptedQuestionIds = [];
     let currentUser = null;
+    let teacherLoadSequence = 0;
     function userStorageKey(key) {
       if (!currentUser) throw new Error("Debes iniciar sesión para acceder a tu progreso.");
       return `codequiz:${currentUser.id}:${key}`;
@@ -1594,9 +1624,11 @@ const contador = ref(0);
     }
 
     function setActivePage(page) {
+      if (page === "teacher" && currentUser?.role !== "teacher") return;
       const isQuizPage = page === "quizzes";
       elements.home.classList.toggle("hidden", page !== "home");
       elements.progressPage.classList.toggle("hidden", page !== "progress");
+      elements.teacherPage.classList.toggle("hidden", page !== "teacher");
       document.getElementById("contentView").classList.toggle("hidden", page !== "content");
       document.getElementById("databaseView").classList.toggle("hidden", page !== "database");
       elements.intro.classList.toggle("hidden", !isQuizPage || Boolean(quizState));
@@ -1608,6 +1640,7 @@ const contador = ref(0);
         home: ["Inicio", "Tu espacio para practicar desarrollo web y seguir tu avance."],
         quizzes: ["Quizzes de programación", "Practica, descubre tus fortalezas y recibe orientación para seguir mejorando."],
         progress: ["Mi progreso", "Consulta tus resultados y observa tu avance por tema."],
+        teacher: ["Seguimiento docente", "Revisa resultados y temas que tus estudiantes pueden reforzar."],
         content: ["Contenido", "Aprende conceptos de JavaScript, Vue.js y CSS con ejemplos sencillos."],
         database: ["Base de datos", "Consulta documentación oficial y recursos confiables para seguir aprendiendo."]
       };
@@ -1620,6 +1653,7 @@ const contador = ref(0);
         else button.removeAttribute("aria-current");
       });
       if (page === "progress") renderProgress();
+      if (page === "teacher") void renderTeacherProgress();
     }
 
     function renderLastResult(result) {
@@ -1680,10 +1714,12 @@ const contador = ref(0);
 
     function saveLastResult() {
       const result = {
+        id: crypto.randomUUID(),
         score: quizState.score,
         total: quizState.total,
         date: new Date().toISOString(),
         topics: quizState.topicResults,
+        wrongAnswers: quizState.wrongAnswers,
         questionIds: quizState.used.map(question => question.id)
       };
       quizHistory.push(result);
@@ -1696,6 +1732,30 @@ const contador = ref(0);
         interruptedQuestionIds = [];
       } catch (error) {
         showStorageNotice("El quiz terminó, pero el navegador no permitió guardar tu historial.");
+      }
+      if (currentUser?.role === "student") void syncQuizAttempt(result);
+    }
+
+    async function syncQuizAttempt(result) {
+      try {
+        const response = await fetch("/api/quiz-attempts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: result.id,
+            score: result.score,
+            total: result.total,
+            topics: result.topics,
+            wrongAnswers: result.wrongAnswers
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || `El servidor respondió con HTTP ${response.status}.`);
+        }
+      } catch (error) {
+        console.error("No se pudo compartir el intento con las cuentas docentes.", error);
+        showStorageNotice(`No se pudo compartir este resultado con los docentes: ${error.message || "error de conexión"}. Tu historial permanece guardado en este navegador.`);
       }
     }
 
@@ -1770,6 +1830,111 @@ const contador = ref(0);
       });
     }
 
+    async function renderTeacherProgress() {
+      const requestId = ++teacherLoadSequence;
+      const status = document.getElementById("teacherStatus");
+      const studentList = document.getElementById("teacherStudentList");
+      status.textContent = "Cargando resultados de estudiantes…";
+      studentList.replaceChildren();
+      try {
+        const response = await fetch("/api/teacher/progress");
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || `No se pudo cargar el seguimiento (HTTP ${response.status}).`);
+        }
+        if (requestId !== teacherLoadSequence) return;
+        if (!Array.isArray(data.students)) {
+          throw new Error("El servidor devolvió un seguimiento con formato inesperado.");
+        }
+        if (!data.students.length) {
+          status.textContent = "Todavía no hay cuentas de estudiante registradas.";
+          return;
+        }
+        status.textContent = `${data.students.length} estudiante${data.students.length === 1 ? "" : "s"} registrado${data.students.length === 1 ? "" : "s"}.`;
+
+        data.students.forEach(student => {
+          const card = document.createElement("article");
+          card.className = "card teacher-student-card";
+          const heading = document.createElement("div");
+          heading.className = "teacher-student-heading";
+          const name = document.createElement("h3");
+          name.textContent = student.name;
+          const username = document.createElement("span");
+          username.textContent = `@${student.username}`;
+          heading.append(name, username);
+          card.append(heading);
+
+          const attempts = Array.isArray(student.attempts) ? student.attempts : [];
+          if (!attempts.length) {
+            const empty = document.createElement("div");
+            empty.className = "progress-empty";
+            empty.textContent = "Aún no ha completado quizzes.";
+            card.append(empty);
+            studentList.append(card);
+            return;
+          }
+
+          const attemptList = document.createElement("div");
+          attemptList.className = "teacher-attempt-list";
+          attempts.forEach(attempt => {
+            const attemptCard = document.createElement("article");
+            attemptCard.className = "teacher-attempt";
+            const topline = document.createElement("div");
+            topline.className = "teacher-attempt-topline";
+            const score = document.createElement("strong");
+            score.textContent = `Puntaje: ${attempt.score}/${attempt.total} · ${Math.round(attempt.score / attempt.total * 100)}%`;
+            const date = document.createElement("span");
+            const parsedDate = new Date(attempt.date);
+            date.textContent = Number.isNaN(parsedDate.getTime())
+              ? "Fecha no disponible"
+              : parsedDate.toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
+            topline.append(score, date);
+            attemptCard.append(topline);
+
+            const topics = document.createElement("p");
+            topics.className = "teacher-attempt-topics";
+            topics.textContent = `Temas: ${Object.entries(attempt.topics || {})
+              .map(([topic, result]) => `${topic} (${result.correct}/${result.total})`)
+              .join(" · ") || "Sin datos"}`;
+            attemptCard.append(topics);
+
+            const wrongAnswers = Array.isArray(attempt.wrongAnswers) ? attempt.wrongAnswers : [];
+            if (!wrongAnswers.length) {
+              const noErrors = document.createElement("p");
+              noErrors.className = "teacher-no-errors";
+              noErrors.textContent = "Sin respuestas incorrectas en este intento.";
+              attemptCard.append(noErrors);
+            } else {
+              const errors = document.createElement("ul");
+              errors.className = "teacher-errors";
+              wrongAnswers.forEach(wrongAnswer => {
+                const item = document.createElement("li");
+                item.className = "teacher-error";
+                const question = document.createElement("strong");
+                question.textContent = `${wrongAnswer.topic}: ${wrongAnswer.prompt}`;
+                const selected = document.createElement("p");
+                selected.textContent = `Respuesta del estudiante: ${wrongAnswer.selectedAnswer}`;
+                const correct = document.createElement("p");
+                correct.textContent = `Respuesta correcta: ${wrongAnswer.correctAnswer}`;
+                const nextStep = document.createElement("p");
+                nextStep.textContent = `Para reforzar: ${wrongAnswer.nextStep}`;
+                item.append(question, selected, correct, nextStep);
+                errors.append(item);
+              });
+              attemptCard.append(errors);
+            }
+            attemptList.append(attemptCard);
+          });
+          card.append(attemptList);
+          studentList.append(card);
+        });
+      } catch (error) {
+        if (requestId !== teacherLoadSequence) return;
+        console.error("No se pudo cargar el seguimiento docente.", error);
+        status.textContent = error.message || "No se pudieron cargar los resultados. Inténtalo de nuevo.";
+      }
+    }
+
     function startQuiz(filter, focusOnly = false) {
       const selectedTopic = filter || elements.topicSelect.value;
       let allowedTopics = selectedTopic === "all" ? null : [selectedTopic];
@@ -1788,6 +1953,7 @@ const contador = ref(0);
         difficulty: 2,
         used: [],
         mistakes: {},
+        wrongAnswers: [],
         topicResults: {},
         recentQuestionIds: [...new Set([
           ...(quizHistory.length ? quizHistory[quizHistory.length - 1].questionIds || [] : []),
@@ -1900,6 +2066,13 @@ const contador = ref(0);
       } else {
         quizState.difficulty = Math.max(1, quizState.difficulty - 1);
         quizState.mistakes[question.topic] = (quizState.mistakes[question.topic] || 0) + 1;
+        quizState.wrongAnswers.push({
+          topic: question.topic,
+          prompt: question.prompt,
+          selectedAnswer: question.options[quizState.selected],
+          correctAnswer: question.options[question.answer],
+          nextStep: question.nextStep
+        });
         elements.feedback.className = "feedback needs-work";
         elements.feedback.innerHTML = `<h3>No pasa nada: cada error es una pista para aprender.</h3><p></p><p class="next-step"><strong>Para reforzar:</strong> ${question.nextStep}</p>`;
       }
@@ -2013,7 +2186,7 @@ const contador = ref(0);
       },
       register: {
         title: "Crea tu cuenta",
-        description: "Regístrate para guardar tu progreso en este dispositivo.",
+        description: "Todos los docentes registrados pueden revisar tus puntajes, errores y temas por reforzar.",
         submit: "Crear cuenta"
       },
       forgot: {
@@ -2083,6 +2256,7 @@ const contador = ref(0);
       document.getElementById("signedInName").textContent = user.name;
       document.getElementById("signedInRole").textContent = user.role === "teacher" ? "Docente" : "Estudiante";
       document.getElementById("signedInAvatar").textContent = user.name.trim().charAt(0).toLocaleUpperCase("es");
+      document.getElementById("teacherNav").hidden = user.role !== "teacher";
       document.getElementById("authScreen").hidden = true;
       document.getElementById("appShell").hidden = false;
       quizHistory = [];
