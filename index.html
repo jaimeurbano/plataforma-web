@@ -314,6 +314,8 @@
     .option.incorrect { color: #a43c46; background: var(--red-light); border-color: #e4a1a5; }
     .option.incorrect .option-letter { color: white; background: var(--red); }
     .quiz-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
+    .quiz-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+    .quiz-ai-button { min-height: 43px; }
     .hint { color: var(--muted); font-size: 11px; }
     .feedback {
       margin-top: 18px;
@@ -326,6 +328,8 @@
     .feedback h3 { margin: 0 0 5px; font-size: 14px; }
     .feedback p { margin: 5px 0 0; font-size: 13px; }
     .feedback .next-step { font-size: 12px; }
+    .feedback .option-analysis { margin: 8px 0 0; padding-left: 20px; font-size: 12px; }
+    .feedback .option-analysis li + li { margin-top: 4px; }
     .feedback[hidden] { display: none; }
 
     .result-card { padding: 28px; }
@@ -450,6 +454,8 @@
       .below-grid, .result-body { grid-template-columns: 1fr; }
       .quiz-card, .result-card { padding: 20px 17px; }
       .quiz-footer { align-items: flex-end; }
+      .quiz-actions { flex: 1 1 100%; }
+      .quiz-actions > button { flex: 1 1 auto; }
       .hint { max-width: 150px; }
       .result-header { align-items: flex-start; gap: 14px; }
       .score-ring { flex-basis: 76px; width: 76px; height: 76px; }
@@ -733,6 +739,28 @@
       font: inherit;
       font-size: 13px;
     }
+    .password-input-wrap { position: relative; }
+    .password-input-wrap input { padding-right: 45px; }
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 9px;
+      display: grid;
+      width: 30px;
+      height: 30px;
+      padding: 5px;
+      place-items: center;
+      color: #5145bb;
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      transform: translateY(-50%);
+    }
+    .password-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+    .password-toggle .eye-closed, .password-toggle[aria-pressed="true"] .eye-open { display: none; }
+    .password-toggle[aria-pressed="true"] .eye-closed { display: block; }
+    .password-toggle:hover { background: #eeecff; }
+    .password-toggle:focus-visible { outline: 3px solid #a9a1ff; outline-offset: 2px; }
     .auth-field input:focus-visible, .auth-field select:focus-visible { outline: 3px solid #a9a1ff; outline-offset: 2px; }
     .auth-field[hidden], .auth-links button[hidden], .auth-back[hidden] { display: none; }
     .auth-submit { width: 100%; margin-top: 5px; }
@@ -835,15 +863,33 @@
           </div>
           <div class="auth-field" id="authInviteGroup" hidden>
             <label for="authInviteCode">Código de invitación docente</label>
-            <input id="authInviteCode" name="inviteCode" type="password" autocomplete="off">
+            <div class="password-input-wrap">
+              <input id="authInviteCode" name="inviteCode" type="password" autocomplete="off">
+              <button class="password-toggle" type="button" data-toggle-password="authInviteCode" aria-label="Mostrar código de invitación" aria-controls="authInviteCode" aria-pressed="false">
+                <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a14 14 0 0 1-3.1 3.8M6.2 6.2C3.5 8.1 2 12 2 12s3.6 7 10 7c1.3 0 2.4-.3 3.4-.7"></path></svg>
+              </button>
+            </div>
           </div>
           <div class="auth-field" id="authPasswordGroup">
             <label for="authPassword">Contraseña</label>
-            <input id="authPassword" name="password" type="password" minlength="8" maxlength="128" autocomplete="current-password">
+            <div class="password-input-wrap">
+              <input id="authPassword" name="password" type="password" minlength="8" maxlength="128" autocomplete="current-password">
+              <button class="password-toggle" type="button" data-toggle-password="authPassword" aria-label="Mostrar contraseña" aria-controls="authPassword" aria-pressed="false">
+                <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a14 14 0 0 1-3.1 3.8M6.2 6.2C3.5 8.1 2 12 2 12s3.6 7 10 7c1.3 0 2.4-.3 3.4-.7"></path></svg>
+              </button>
+            </div>
           </div>
           <div class="auth-field" id="authConfirmGroup" hidden>
             <label for="authConfirmPassword">Confirma la contraseña</label>
-            <input id="authConfirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password">
+            <div class="password-input-wrap">
+              <input id="authConfirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password">
+              <button class="password-toggle" type="button" data-toggle-password="authConfirmPassword" aria-label="Mostrar confirmación de contraseña" aria-controls="authConfirmPassword" aria-pressed="false">
+                <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a14 14 0 0 1-3.1 3.8M6.2 6.2C3.5 8.1 2 12 2 12s3.6 7 10 7c1.3 0 2.4-.3 3.4-.7"></path></svg>
+              </button>
+            </div>
           </div>
           <button class="primary-button auth-submit" id="authSubmit" type="submit">Iniciar sesión <span aria-hidden="true">→</span></button>
         </form>
@@ -896,7 +942,7 @@
           <article class="card home-welcome">
             <div class="eyebrow">CodeQuiz IA</div>
             <h2>Aprende desarrollo web a tu ritmo</h2>
-            <p>Practica JavaScript, Vue.js y CSS con quizzes que ajustan su dificultad y te explican cómo mejorar en cada respuesta.</p>
+            <p>Practica JavaScript moderno, Vue 3 con Pinia y CSS accesible con quizzes adaptativos que explican cada respuesta.</p>
             <button class="primary-button" id="homeStartButton" type="button">Ir a los quizzes <span aria-hidden="true">→</span></button>
           </article>
           <section class="below-grid" aria-label="Resumen de aprendizaje">
@@ -905,8 +951,8 @@
               <p>Elige una ruta o practica un tema específico.</p>
               <div class="topic-list">
                 <div class="topic"><span class="topic-icon" aria-hidden="true">JS</span> JavaScript</div>
-                <div class="topic"><span class="topic-icon" aria-hidden="true">V</span> Vue.js</div>
-                <div class="topic"><span class="topic-icon" aria-hidden="true">#</span> CSS</div>
+                <div class="topic"><span class="topic-icon" aria-hidden="true">V</span> Vue 3 · Pinia</div>
+                <div class="topic"><span class="topic-icon" aria-hidden="true">#</span> CSS · WCAG</div>
               </div>
             </article>
             <article class="card small-card">
@@ -1057,7 +1103,7 @@ const contador = ref(0);
               <p class="subcopy">Elige un tema o deja que la ruta adaptativa combine varios conceptos.</p>
               <label class="field-label" for="topicSelect">Tema de práctica</label>
               <select id="topicSelect">
-                <option value="all">Ruta adaptativa · JavaScript, Vue.js y CSS</option>
+                <option value="all">Ruta adaptativa · JS moderno, Vue 3/Pinia y CSS/WCAG</option>
                 <option value="JavaScript">JavaScript</option>
                 <option value="Vue.js">Vue.js</option>
                 <option value="CSS">CSS</option>
@@ -1074,7 +1120,7 @@ const contador = ref(0);
                 <div class="aside-value">Hasta 5</div>
               </div>
               <div class="aside-divider"></div>
-              <div class="aside-caption">Al terminar verás tus aciertos, los temas que puedes reforzar y una recomendación para continuar.</div>
+              <div class="aside-caption">Practica lógica moderna, estado con Vue/Pinia y diseño CSS accesible. Al terminar verás tus aciertos y qué reforzar.</div>
             </div>
           </div>
         </section>
@@ -1085,8 +1131,8 @@ const contador = ref(0);
             <p>Desarrolla habilidades para crear sitios y aplicaciones web.</p>
             <div class="topic-list">
               <div class="topic"><span class="topic-icon" aria-hidden="true">JS</span> JavaScript</div>
-              <div class="topic"><span class="topic-icon" aria-hidden="true">V</span> Vue.js</div>
-              <div class="topic"><span class="topic-icon" aria-hidden="true">#</span> CSS</div>
+              <div class="topic"><span class="topic-icon" aria-hidden="true">V</span> Vue 3 · Pinia</div>
+              <div class="topic"><span class="topic-icon" aria-hidden="true">#</span> CSS · WCAG</div>
             </div>
           </article>
           <article class="card small-card">
@@ -1109,7 +1155,7 @@ const contador = ref(0);
           </div>
           <p class="question-level" id="questionLevel">Nivel intermedio</p>
           <div class="lesson-intro" id="lessonIntro">
-            <strong>Antes de empezar: <span id="lessonTopic"></span></strong>
+            <strong>Contexto de la pregunta: <span id="lessonTopic"></span></strong>
             <p id="lessonDescription"></p>
           </div>
           <h2 class="question-title" id="questionTitle"></h2>
@@ -1118,7 +1164,10 @@ const contador = ref(0);
           <div class="feedback" id="feedback" role="status" aria-live="polite" hidden></div>
           <div class="quiz-footer">
             <span class="hint" id="quizHint">Selecciona la respuesta que consideres correcta.</span>
-            <button class="primary-button" id="answerButton" type="button" disabled>Comprobar respuesta</button>
+            <div class="quiz-actions">
+              <button class="secondary-button quiz-ai-button" id="quizAIButton" type="button">Pedir pista a la IA</button>
+              <button class="primary-button" id="answerButton" type="button" disabled>Comprobar respuesta</button>
+            </div>
           </div>
         </section>
 
@@ -1153,7 +1202,7 @@ const contador = ref(0);
     <footer class="page-footer">
       <span>CodeQuiz IA</span>
       <a href="#introView">Práctica adaptativa</a>
-      <a href="#overview">JavaScript · Vue.js · CSS</a>
+      <a href="#overview">JavaScript moderno · Vue 3/Pinia · CSS accesible</a>
     </footer>
     <button class="ai-launcher" id="aiLauncher" type="button" aria-expanded="false" aria-controls="aiChat">
       <span class="ai-launcher-icon" aria-hidden="true">✦</span> Consultar a la IA
@@ -1185,6 +1234,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 1,
         prompt: "¿Qué valor imprime este código?",
+        introduction: "Las plantillas de texto permiten combinar palabras con valores guardados en variables. Observa cómo se construye el mensaje antes de imprimirse.",
         code: "const nombre = \"Ada\";\nconsole.log(`Hola, ${nombre}`);",
         options: ["Hola, nombre", "Hola, Ada", "Ada Hola", "Se produce un error"],
         answer: 1,
@@ -1194,6 +1244,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 1,
         prompt: "¿Qué número muestra este código?",
+        introduction: "Los operadores de asignación actualizan el valor de una variable usando su valor actual. Sigue cada operación para encontrar el nuevo estado.",
         code: "let puntos = 3;\npuntos += 2;\nconsole.log(puntos);",
         options: ["3", "5", "32", "undefined"],
         answer: 1,
@@ -1203,6 +1254,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 2,
         prompt: "¿Qué resultado produce la comparación estricta?",
+        introduction: "JavaScript tiene distintos tipos de datos, como textos y números. La comparación estricta evalúa dos aspectos de los valores antes de decidir si coinciden.",
         code: "console.log(\"5\" === 5);",
         options: ["true", "false", "\"5\"", "Se produce un error"],
         answer: 1,
@@ -1212,6 +1264,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 2,
         prompt: "¿Qué valor imprime este código después del push?",
+        introduction: "Los arreglos guardan colecciones ordenadas. Sus métodos pueden cambiar su contenido y sus propiedades permiten consultar información sobre la colección.",
         code: "const frutas = [\"pera\"];\nfrutas.push(\"mango\");\nconsole.log(frutas.length);",
         options: ["1", "2", "mango", "undefined"],
         answer: 1,
@@ -1221,6 +1274,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 3,
         prompt: "¿Qué propiedad se muestra en la consola?",
+        introduction: "Los objetos agrupan datos en propiedades. Una constante que contiene un objeto puede conservar la misma referencia aunque cambie el valor de una propiedad.",
         code: "const usuario = { nombre: \"Luz\" };\nusuario.nombre = \"Sol\";\nconsole.log(usuario.nombre);",
         options: ["Luz", "Sol", "usuario.nombre", "Se produce un error"],
         answer: 1,
@@ -1230,6 +1284,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 2,
         prompt: "¿Cuántos elementos quedan después de filtrar?",
+        introduction: "El método filter crea un arreglo nuevo con los elementos que cumplen una condición. Para resolverlo, identifica cuáles elementos pasan el filtro.",
         code: "const valores = [true, false, true];\nconst activos = valores.filter(Boolean);\nconsole.log(activos.length);",
         options: ["1", "2", "3", "false"],
         answer: 1,
@@ -1239,6 +1294,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 3,
         prompt: "¿Qué valor tiene nombre después de la desestructuración?",
+        introduction: "La desestructuración permite extraer propiedades de un objeto y guardarlas en variables. Fíjate en la correspondencia entre el nombre de la propiedad y la variable creada.",
         code: "const persona = { nombre: \"Sam\" };\nconst { nombre } = persona;\nconsole.log(nombre);",
         options: ["persona", "nombre", "Sam", "undefined"],
         answer: 2,
@@ -1248,6 +1304,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 2,
         prompt: "¿Qué imprime el programa después de ejecutar la función?",
+        introduction: "Las funciones pueden definir valores predeterminados para los parámetros. Cuando se omite un argumento, el parámetro puede tomar ese valor al ejecutar la función.",
         code: "function sumar(a, b = 2) {\n  return a + b;\n}\nconsole.log(sumar(5));",
         options: ["5", "7", "10", "undefined"],
         answer: 1,
@@ -1257,6 +1314,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 3,
         prompt: "¿Qué valor tiene resultado al finalizar?",
+        introduction: "Los métodos de arreglos se pueden encadenar: uno selecciona elementos y otro transforma los que quedan. Sigue el resultado paso a paso.",
         code: "const numeros = [2, 3, 4];\nconst resultado = numeros\n  .filter(numero => numero > 2)\n  .map(numero => numero * 2);",
         options: ["[2, 3, 4]", "[3, 4]", "[6, 8]", "[4, 6, 8]"],
         answer: 2,
@@ -1266,6 +1324,7 @@ const contador = ref(0);
       {
         topic: "JavaScript", difficulty: 1,
         prompt: "¿Qué devuelve typeof para el valor \"CodeQuiz\"?",
+        introduction: "JavaScript incluye operadores para inspeccionar los valores. typeof permite averiguar la categoría de un dato, por ejemplo, si representa texto o un número.",
         code: "typeof \"CodeQuiz\"",
         options: ["text", "string", "char", "String"],
         answer: 1,
@@ -1275,6 +1334,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 1,
         prompt: "En Vue 3 con Composition API, ¿para qué se usa ref?",
+        introduction: "Vue utiliza reactividad para mantener sincronizados los datos de una aplicación y su interfaz. En Composition API hay herramientas para declarar datos que pueden cambiar.",
         code: "import { ref } from 'vue';\nconst contador = ref(0);",
         options: ["Para crear un estilo CSS", "Para crear un dato reactivo", "Para registrar una ruta", "Para hacer una petición HTTP"],
         answer: 1,
@@ -1284,6 +1344,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 2,
         prompt: "¿Qué directiva muestra un elemento solo cuando haySesion es verdadero?",
+        introduction: "Las directivas de Vue agregan comportamiento a elementos de una plantilla. Algunas controlan si un elemento aparece según una condición.",
         code: "<p v-if=\"haySesion\">Bienvenido</p>",
         options: ["v-for", "v-model", "v-if", "v-bind"],
         answer: 1,
@@ -1293,6 +1354,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 3,
         prompt: "¿Qué hace v-for en esta plantilla?",
+        introduction: "Las listas de una interfaz suelen generarse a partir de colecciones de datos. Vue ofrece una directiva para representar un elemento de plantilla por cada dato.",
         code: "<li v-for=\"tarea in tareas\" :key=\"tarea.id\">\n  {{ tarea.nombre }}\n</li>",
         options: ["Valida el formulario", "Crea un elemento por cada tarea", "Convierte el texto en HTML", "Define una propiedad computada"],
         answer: 1,
@@ -1302,6 +1364,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 1,
         prompt: "¿Qué interpolación muestra el valor de mensaje en una plantilla de Vue?",
+        introduction: "Las plantillas de Vue enlazan datos con el contenido de la página. La interpolación inserta el valor de una expresión como texto en el marcado.",
         code: "<h1>{{ mensaje }}</h1>",
         options: ["${mensaje}", "{{ mensaje }}", "[[mensaje]]", "<%= mensaje %>"],
         answer: 1,
@@ -1311,6 +1374,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 1,
         prompt: "¿Qué hace @click en este botón?",
+        introduction: "Las interfaces responden a acciones como los clics. Vue permite escuchar eventos desde la plantilla y ejecutar una expresión cuando ocurren.",
         code: "<button @click=\"contador++\">Sumar</button>",
         options: ["Aplica estilos al botón", "Ejecuta una acción cuando se hace clic", "Crea una lista de botones", "Enlaza un campo de texto"],
         answer: 1,
@@ -1320,6 +1384,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 2,
         prompt: "¿Para qué sirve v-model en un campo de texto?",
+        introduction: "En un formulario, el valor de un campo y el estado de la aplicación deben mantenerse sincronizados mientras la persona escribe.",
         code: "<input v-model=\"nombre\" />",
         options: ["Para enlazar el valor del campo con un dato", "Para ocultar el campo", "Para repetir el campo varias veces", "Para cambiar la ruta de la página"],
         answer: 0,
@@ -1329,6 +1394,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 3,
         prompt: "¿Qué valor tendrá total si precio es 4 y cantidad es 3?",
+        introduction: "Una propiedad computada obtiene su valor a partir de otros datos y vuelve a calcularse cuando estos cambian. Analiza qué operación relaciona sus dependencias.",
         code: "const precio = ref(4);\nconst cantidad = ref(3);\nconst total = computed(() => precio.value * cantidad.value);",
         options: ["7", "12", "43", "0"],
         answer: 1,
@@ -1338,6 +1404,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 2,
         prompt: "¿Cómo recibe el componente hijo el valor enviado en esta plantilla?",
+        introduction: "En una aplicación con componentes, el componente padre puede enviar datos al hijo. Vue define una forma de recibir esos valores y declararlos en el componente.",
         code: "<Tarjeta titulo=\"Mi curso\" />",
         options: ["Como una prop llamada titulo", "Como una variable global", "Como un evento del navegador", "Como una clase CSS"],
         answer: 0,
@@ -1347,6 +1414,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 3,
         prompt: "¿Cuándo se ejecuta normalmente onMounted?",
+        introduction: "Los componentes pasan por distintas etapas durante su ciclo de vida. Algunos hooks permiten ejecutar tareas cuando una etapa concreta ya ocurrió.",
         code: "onMounted(() => {\n  console.log(\"Componente listo\");\n});",
         options: ["Antes de crear la aplicación", "Cuando el componente ya fue montado en la página", "Cada vez que se importa Vue", "Solo al cerrar el navegador"],
         answer: 1,
@@ -1356,6 +1424,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 2,
         prompt: "¿Qué clase se aplica cuando seleccionado es verdadero?",
+        introduction: "Las clases CSS pueden enlazarse a datos para que el aspecto de un elemento cambie según el estado de la aplicación.",
         code: "<button :class=\"{ activo: seleccionado }\">Tema</button>",
         options: ["La clase activo", "La clase seleccionado", "Ninguna clase", "Una clase llamada true"],
         answer: 0,
@@ -1365,6 +1434,7 @@ const contador = ref(0);
       {
         topic: "Vue.js", difficulty: 3,
         prompt: "¿Qué permite hacer defineEmits en un componente con script setup?",
+        introduction: "Los componentes hijos pueden comunicar acciones al padre mediante eventos personalizados. Vue permite declarar qué eventos puede emitir un componente.",
         code: "const emit = defineEmits([\"guardar\"]);\nemit(\"guardar\");",
         options: ["Declarar eventos que el componente puede emitir", "Crear variables CSS", "Importar un componente automáticamente", "Leer datos de una API"],
         answer: 0,
@@ -1374,6 +1444,7 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 1,
         prompt: "¿Qué selector aplica este estilo a todos los elementos con class=\"tarjeta\"?",
+        introduction: "Los selectores CSS identifican qué elementos reciben una regla. Las clases y los identificadores usan símbolos distintos y pueden coincidir con elementos diferentes.",
         code: ".tarjeta {\n  padding: 16px;\n}",
         options: ["#tarjeta", ".tarjeta", "tarjeta()", "*tarjeta"],
         answer: 1,
@@ -1383,6 +1454,7 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 2,
         prompt: "¿Qué efecto tiene display: flex en este contenedor?",
+        introduction: "Flexbox organiza elementos dentro de un contenedor usando un eje principal y otro transversal. Las propiedades de alineación actúan sobre esos ejes.",
         code: ".contenedor {\n  display: flex;\n  justify-content: center;\n}",
         options: ["Centra el texto verticalmente siempre", "Activa Flexbox y centra los elementos en el eje principal", "Oculta los elementos", "Crea una cuadrícula de columnas"],
         answer: 1,
@@ -1392,6 +1464,7 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 3,
         prompt: "¿Qué regla hace que una tarjeta use tres columnas iguales en CSS Grid?",
+        introduction: "CSS Grid permite distribuir elementos en filas y columnas. Las fracciones reparten el espacio disponible entre las pistas de la cuadrícula.",
         code: ".rejilla {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n}",
         options: ["Crea tres columnas de ancho igual", "Crea tres filas de altura fija", "Divide el contenedor en tres columnas de 1 píxel", "Aplica tres capas de color"],
         answer: 0,
@@ -1401,6 +1474,7 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 1,
         prompt: "¿Qué propiedad cambia el color del texto?",
+        introduction: "CSS tiene propiedades para controlar partes distintas de la apariencia, como el texto, el fondo y la alineación. Identifica cuál actúa sobre el color de los caracteres.",
         code: "p {\n  color: #5145bb;\n}",
         options: ["background-color", "font-style", "color", "text-align"],
         answer: 2,
@@ -1410,6 +1484,7 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 1,
         prompt: "¿Qué espacio controla padding?",
+        introduction: "El modelo de caja distingue el espacio interior del elemento del espacio que lo separa de otros elementos. Dos propiedades comunes controlan esas áreas.",
         code: ".caja {\n  padding: 16px;\n}",
         options: ["El espacio interior, entre el contenido y el borde", "El espacio exterior entre elementos", "El grosor de la letra", "La distancia entre líneas de texto"],
         answer: 0,
@@ -1419,6 +1494,7 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 2,
         prompt: "¿Qué hace box-sizing: border-box?",
+        introduction: "El tamaño visible de una caja depende del contenido, el relleno interior y el borde. box-sizing determina cómo se calcula el ancho o alto declarado.",
         code: ".tarjeta {\n  width: 200px;\n  padding: 20px;\n  box-sizing: border-box;\n}",
         options: ["Suma padding al ancho declarado", "Incluye padding y borde dentro del ancho declarado", "Elimina el padding", "Convierte la caja en una cuadrícula"],
         answer: 1,
@@ -1428,6 +1504,7 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 3,
         prompt: "¿Qué regla aplica los estilos solo cuando la pantalla mide como máximo 600 px?",
+        introduction: "Las media queries permiten adaptar una interfaz a las características de la pantalla. Una condición puede activar estilos solo dentro de cierto rango de ancho.",
         code: "@media (max-width: 600px) {\n  .menu { display: none; }\n}",
         options: ["Una animación de 600 segundos", "Una regla adaptable para pantallas de hasta 600 px", "Un selector para el elemento 600", "Un estilo que siempre se aplica"],
         answer: 1,
@@ -1437,6 +1514,7 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 2,
         prompt: "¿Respecto a qué se ubica normalmente un elemento con position: fixed?",
+        introduction: "Las propiedades de posicionamiento definen desde qué referencia se calculan las coordenadas de un elemento y si este acompaña el desplazamiento de la página.",
         code: ".boton-ayuda {\n  position: fixed;\n  right: 16px;\n  bottom: 16px;\n}",
         options: ["Al último párrafo", "A la ventana del navegador", "Al tamaño de la fuente", "Al centro del documento siempre"],
         answer: 1,
@@ -1446,6 +1524,7 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 3,
         prompt: "¿Qué selector tiene mayor especificidad?",
+        introduction: "Cuando varias reglas CSS coinciden con un elemento, la especificidad ayuda a determinar cuál declaración prevalece. Los tipos de selector aportan distinto peso.",
         code: "#aviso { color: red; }\n.mensaje { color: blue; }",
         options: ["#aviso", ".mensaje", "Ambos tienen la misma", "Depende del orden alfabético"],
         answer: 0,
@@ -1455,21 +1534,185 @@ const contador = ref(0);
       {
         topic: "CSS", difficulty: 1,
         prompt: "¿Qué permite display: inline-block?",
+        introduction: "Las propiedades display definen cómo participa un elemento en el flujo de la página y qué dimensiones pueden aplicársele.",
         code: ".etiqueta {\n  display: inline-block;\n  width: 120px;\n}",
         options: ["Ocultar el elemento", "Mantenerlo en línea y permitir definir ancho y alto", "Convertirlo en una cuadrícula", "Fijarlo a la ventana"],
         answer: 1,
         explanation: "inline-block fluye junto a otros elementos en línea, pero permite establecer dimensiones como width y height.",
         nextStep: "Compara display: inline, block e inline-block y observa cómo afectan el espacio y las dimensiones."
+      },
+      {
+        topic: "JavaScript", difficulty: 3,
+        prompt: "¿Qué valores puede contener resultados después de resolver todas las promesas?",
+        introduction: "Cuando varias operaciones asíncronas son independientes, JavaScript puede esperarlas en paralelo. Para que un fallo individual no oculte los resultados de las demás, existe un método que registra cada desenlace.",
+        code: "const resultados = await Promise.allSettled([\n  cargarPerfil(),\n  cargarCursos()\n]);",
+        options: [
+          "Solo los valores exitosos; cualquier rechazo interrumpe la espera",
+          "Un resultado por promesa con su estado fulfilled o rejected",
+          "Una única promesa que se rechaza si falla alguna operación",
+          "Los resultados siempre llegan en el mismo orden en que terminan"
+        ],
+        answer: 1,
+        explanation: "Promise.allSettled espera a que todas las promesas terminen y devuelve un arreglo en el orden de entrada con un estado y valor o razón por cada una. A confunde este método con Promise.all, que rechaza al primer fallo; C describe también el comportamiento de Promise.all; D es incorrecta porque el arreglo conserva el orden original, no el de finalización.",
+        nextStep: "Compara Promise.all y Promise.allSettled cuando una pantalla necesita mostrar resultados parciales aunque una petición falle.",
+        optionExplanations: [
+          "Incorrecta: ese comportamiento corresponde a Promise.all cuando una de sus promesas se rechaza.",
+          "Correcta: cada elemento informa su estado y conserva la posición de la promesa original.",
+          "Incorrecta: allSettled no rechaza el conjunto por el fallo individual de una operación.",
+          "Incorrecta: los resultados mantienen el orden de entrada, aunque las operaciones terminen en otro orden."
+        ]
+      },
+      {
+        topic: "JavaScript", difficulty: 3,
+        prompt: "¿Qué sucede si guardarPerfil() rechaza la promesa?",
+        introduction: "Las funciones async permiten esperar operaciones asíncronas con await. Un bloque try/catch dentro de la función ayuda a controlar los fallos en el mismo flujo donde se procesa el resultado.",
+        code: "async function guardar() {\n  try {\n    const perfil = await guardarPerfil();\n    mostrar(perfil);\n  } catch (error) {\n    mostrarError(error);\n  }\n}",
+        options: [
+          "Se ejecuta mostrar(perfil) con el error como perfil",
+          "Se ejecuta mostrarError(error) y la función async resuelve normalmente si el catch no relanza",
+          "El bloque catch nunca captura rechazos de una promesa",
+          "El navegador vuelve a ejecutar guardarPerfil() automáticamente"
+        ],
+        answer: 1,
+        explanation: "await propaga el rechazo como una excepción que captura el catch. Si el catch lo maneja y no lanza otro error, la función async se resuelve con undefined. A ignora el salto al catch, C contradice el comportamiento de await y D inventa un reintento automático que no existe.",
+        nextStep: "Practica el manejo de errores asíncronos y decide si cada catch debe mostrar el error, reintentarlo o volver a lanzarlo.",
+        optionExplanations: [
+          "Incorrecta: al rechazarse la promesa, la ejecución salta al bloque catch y no asigna el error a perfil.",
+          "Correcta: el catch recibe el rechazo; al no relanzar, la función termina sin propagarlo.",
+          "Incorrecta: await convierte el rechazo en una excepción capturable por try/catch.",
+          "Incorrecta: un reintento requiere lógica explícita, por ejemplo un bucle o una nueva llamada."
+        ]
+      },
+      {
+        topic: "Vue.js", difficulty: 3,
+        prompt: "¿Qué ocurre con el estado cuando se desestructura así una store de Pinia?",
+        introduction: "Una store de Pinia es reactiva. Al extraer propiedades directamente con desestructuración se puede perder el vínculo reactivo, por eso Pinia ofrece una utilidad para exponer el estado como referencias.",
+        code: "const store = useCuentaStore();\nconst { nombre } = storeToRefs(store);",
+        options: [
+          "nombre sigue siendo reactivo y se puede leer como nombre.value dentro de JavaScript",
+          "nombre se convierte en una copia fija que nunca se actualiza",
+          "storeToRefs crea una store nueva e independiente",
+          "nombre solo funciona dentro de una plantilla CSS"
+        ],
+        answer: 0,
+        explanation: "storeToRefs crea refs para las propiedades reactivas de estado y getters de la store, preservando la reactividad al desestructurar; en JavaScript se accede con .value y en la plantilla Vue lo desenvuelve. B describe el riesgo de desestructurar directamente una propiedad primitiva de la store; C y D no corresponden a la API de Pinia.",
+        nextStep: "Prueba storeToRefs para extraer estado y getters; conserva la store original para llamar sus acciones.",
+        optionExplanations: [
+          "Correcta: la propiedad se convierte en una ref vinculada al estado reactivo de la store.",
+          "Incorrecta: storeToRefs se usa precisamente para conservar la reactividad al desestructurar.",
+          "Incorrecta: la utilidad no duplica la store; crea referencias a sus propiedades reactivas.",
+          "Incorrecta: es una utilidad de Pinia para el estado de JavaScript, no una función de CSS."
+        ]
+      },
+      {
+        topic: "Vue.js", difficulty: 3,
+        prompt: "¿Cuál es la forma adecuada de cambiar el saldo desde la interfaz usando una acción de Pinia?",
+        introduction: "Pinia centraliza el estado compartido y permite definir acciones para encapsular los cambios. La interfaz puede llamar una acción en lugar de duplicar la lógica del estado.",
+        code: "export const useCuentaStore = defineStore('cuenta', {\n  state: () => ({ saldo: 0 }),\n  actions: {\n    depositar(cantidad) {\n      this.saldo += cantidad;\n    }\n  }\n});",
+        options: [
+          "const { saldo } = useCuentaStore(); saldo = saldo + cantidad",
+          "useCuentaStore().depositar(10)",
+          "defineStore('cuenta').saldo = 10",
+          "Cambiar el texto del botón con innerHTML para actualizar la store"
+        ],
+        answer: 1,
+        explanation: "Se obtiene la instancia de la store y se llama su acción depositar, que actualiza el estado compartido y permite que Vue actualice las vistas dependientes. A intenta reasignar una variable desestructurada y evita la acción; C no crea una instancia válida de esa manera; D modifica el DOM pero no el estado reactivo de Pinia.",
+        nextStep: "Mantén las reglas de actualización del estado compartido en acciones de Pinia y llama esas acciones desde los componentes.",
+        optionExplanations: [
+          "Incorrecta: saldo es estado reactivo y no debe reasignarse desde una variable desestructurada.",
+          "Correcta: se llama a la acción de la instancia, que actualiza el estado centralizado.",
+          "Incorrecta: defineStore define la store; primero hay que invocar useCuentaStore para obtener su instancia.",
+          "Incorrecta: cambiar el DOM directamente no actualiza el estado de Pinia ni es el flujo declarativo de Vue."
+        ]
+      },
+      {
+        topic: "CSS", difficulty: 3,
+        prompt: "¿Qué efecto tiene esta definición cuando el espacio disponible cambia?",
+        introduction: "CSS Grid puede adaptar automáticamente el número de columnas al espacio disponible. minmax establece un tamaño mínimo y máximo, y auto-fit permite ajustar las columnas que caben.",
+        code: ".tarjetas {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));\n  gap: 1rem;\n}",
+        options: [
+          "Crea columnas responsivas de al menos 15rem y distribuye el espacio restante entre ellas",
+          "Fija siempre exactamente 15 columnas de 1rem",
+          "Obliga a cada tarjeta a medir exactamente 15rem y desborda el contenedor",
+          "Convierte el contenedor en Flexbox"
+        ],
+        answer: 0,
+        explanation: "auto-fit coloca tantas columnas como quepan con el mínimo de 15rem y 1fr reparte el espacio restante. B confunde el número de repeticiones y las unidades; C interpreta minmax como un tamaño fijo; D es incorrecta porque display:grid activa Grid, no Flexbox.",
+        nextStep: "Combina repeat, auto-fit y minmax para crear rejillas adaptables sin depender de un breakpoint fijo.",
+        optionExplanations: [
+          "Correcta: el navegador ajusta la cantidad de columnas y distribuye el espacio disponible.",
+          "Incorrecta: auto-fit calcula cuántas columnas caben; no significa quince columnas.",
+          "Incorrecta: 15rem es el mínimo y 1fr permite que la columna crezca.",
+          "Incorrecta: el código declara explícitamente el modelo CSS Grid."
+        ]
+      },
+      {
+        topic: "CSS", difficulty: 2,
+        prompt: "¿Qué hace var(--color-acento, #5145bb) si no existe --color-acento?",
+        introduction: "Las propiedades personalizadas de CSS almacenan valores reutilizables, por ejemplo para un tema. var() puede incluir un valor de respaldo para cuando la propiedad no está definida.",
+        code: ":root {\n  --color-texto: #222;\n}\n.boton {\n  color: var(--color-acento, #5145bb);\n}",
+        options: [
+          "Usa #5145bb como valor de respaldo para color",
+          "Elimina la propiedad color del botón",
+          "Crea automáticamente --color-acento con el valor del respaldo en :root",
+          "Aplica el respaldo solo a elementos que no tengan texto"
+        ],
+        answer: 0,
+        explanation: "El segundo argumento de var() es el valor de respaldo que se usa en esa declaración cuando la propiedad personalizada no está disponible. No declara la variable globalmente ni depende de que el elemento tenga texto.",
+        nextStep: "Usa propiedades personalizadas para centralizar colores de tema y valores de respaldo donde puedan faltar.",
+        optionExplanations: [
+          "Correcta: el fallback se usa como valor de color en esa regla.",
+          "Incorrecta: la declaración sigue teniendo un valor válido mediante el fallback.",
+          "Incorrecta: el fallback no registra la propiedad personalizada en :root.",
+          "Incorrecta: la selección del fallback depende de la existencia de la variable, no del contenido del elemento."
+        ]
+      },
+      {
+        topic: "CSS", difficulty: 3,
+        prompt: "¿Qué práctica mejora la accesibilidad del campo de búsqueda?",
+        introduction: "WCAG y HTML semántico ayudan a que los controles puedan identificarse y utilizarse con diferentes tecnologías de asistencia y métodos de entrada.",
+        code: "<label for=\"busqueda\">Buscar cursos</label>\n<input id=\"busqueda\" type=\"search\">\n<button type=\"submit\">Buscar</button>",
+        options: [
+          "El label asociado da un nombre accesible al campo y el botón nativo admite teclado",
+          "Cambiar input por un div con un manejador de clic",
+          "Eliminar el label porque el texto del botón ya nombra el campo",
+          "Usar outline: none para que el foco no distraiga"
+        ],
+        answer: 0,
+        explanation: "El atributo for conecta el label con el input y proporciona un nombre accesible; los controles nativos ofrecen semántica y operación por teclado. El botón nombra su acción, no el campo. Un div requiere reconstruir interacción y semántica, y quitar el indicador de foco puede impedir que se perciba la navegación por teclado.",
+        nextStep: "Comprueba que cada control tenga nombre accesible, funcione con teclado y conserve un indicador de foco visible.",
+        optionExplanations: [
+          "Correcta: la etiqueta asociada identifica el campo y los controles nativos aportan comportamiento accesible.",
+          "Incorrecta: un div no tiene por defecto semántica ni activación por teclado como un control nativo.",
+          "Incorrecta: el texto del botón describe la acción, no proporciona un nombre al input.",
+          "Incorrecta: eliminar el foco visible dificulta saber qué control está activo al usar el teclado."
+        ]
+      },
+      {
+        topic: "CSS", difficulty: 3,
+        prompt: "¿Qué logra el siguiente estilo para una persona que navega con teclado?",
+        introduction: "La accesibilidad no consiste solo en que el contenido se vea: las personas que usan teclado necesitan identificar en todo momento qué control tiene el foco.",
+        code: "button:focus-visible {\n  outline: 3px solid #222;\n  outline-offset: 3px;\n}",
+        options: [
+          "Muestra un indicador de foco visible al navegar con métodos como el teclado",
+          "Oculta el botón cuando recibe el foco",
+          "Cambia permanentemente el color del borde para todas las personas",
+          "Desactiva el orden de tabulación del navegador"
+        ],
+        answer: 0,
+        explanation: ":focus-visible aplica estilos cuando el navegador determina que es útil mostrar un indicador de foco, normalmente durante la navegación por teclado. No oculta controles ni cambia el orden de tabulación; tampoco elimina la necesidad de comprobar que el indicador tenga contraste suficiente.",
+        nextStep: "Verifica el contraste y la visibilidad del foco en todos los controles interactivos mientras navegas con Tab y Shift+Tab.",
+        optionExplanations: [
+          "Correcta: outline y outline-offset hacen perceptible el foco sin alterar el flujo del documento.",
+          "Incorrecta: outline dibuja un contorno; no oculta el elemento.",
+          "Incorrecta: focus-visible se aplica según el estado de foco y el criterio del navegador, no permanentemente.",
+          "Incorrecta: el selector de estilo no cambia el orden de tabulación ni la interacción nativa."
+        ]
       }
     ].map(question => ({ ...question, id: `${question.topic}:${question.prompt}` }));
 
     const quizLength = 5;
     const levelNames = { 1: "Nivel inicial", 2: "Nivel intermedio", 3: "Nivel de reto" };
-    const topicIntroductions = {
-      JavaScript: "JavaScript es un lenguaje que da comportamiento e interactividad a las páginas web. En este quiz practicarás variables, funciones, tipos de datos y métodos para trabajar con arreglos.",
-      "Vue.js": "Vue.js es un framework progresivo para construir interfaces web reactivas. Aprenderás conceptos como plantillas, directivas y estado reactivo con la Composition API.",
-      CSS: "CSS define la presentación visual de una página web. En este quiz practicarás selectores, Flexbox, Grid y propiedades para dar estilo y organizar elementos."
-    };
     const elements = {
       intro: document.getElementById("introView"),
       overview: document.getElementById("overview"),
@@ -1507,6 +1750,7 @@ const contador = ref(0);
 
     const AI_ENDPOINT = "/api/assistant"; // Cambia esta ruta por el endpoint de tu backend.
     const aiConversation = [];
+    let aiRequestInProgress = false;
     function appendAIMessage(text, type = "assistant") {
       const message = document.createElement("div");
       message.className = `ai-message${type === "user" ? " user" : ""}${type === "error" ? " error" : ""}`;
@@ -1554,14 +1798,17 @@ const contador = ref(0);
       else launcher.focus();
     }
 
-    async function askAI(question) {
+    async function askAI(question, displayQuestion = null) {
       const sendButton = document.getElementById("aiSend");
       const input = document.getElementById("aiQuestion");
       const chat = document.getElementById("aiChat");
+      if (aiRequestInProgress) return false;
+      aiRequestInProgress = true;
       sendButton.disabled = true;
       input.disabled = true;
       chat.setAttribute("aria-busy", "true");
       try {
+        if (displayQuestion) appendAIMessage(displayQuestion, "user");
         const controller = new AbortController();
         const timeout = window.setTimeout(() => controller.abort(), 90000);
         let response;
@@ -1602,6 +1849,7 @@ const contador = ref(0);
         );
         appendAIMessage(answer.trim());
         appendAISources(data.sources);
+        return true;
       } catch (error) {
         console.error("No se pudo consultar el asistente de IA.", error);
         const message = error.name === "AbortError"
@@ -1610,7 +1858,9 @@ const contador = ref(0);
             ? `No se pudo conectar con el servicio de IA en ${AI_ENDPOINT}. Verifica que el backend esté activo y disponible desde esta página.`
             : error.message || "Ocurrió un error al consultar la IA. Intenta de nuevo.";
         appendAIMessage(message, "error");
+        return false;
       } finally {
+        aiRequestInProgress = false;
         sendButton.disabled = false;
         input.disabled = false;
         chat.setAttribute("aria-busy", "false");
@@ -2000,7 +2250,7 @@ const contador = ref(0);
       elements.questionCount.textContent = `Pregunta ${quizState.answered + 1} de ${quizState.total}`;
       elements.questionTopic.textContent = question.topic;
       elements.lessonTopic.textContent = question.topic;
-      elements.lessonDescription.textContent = topicIntroductions[question.topic];
+      elements.lessonDescription.textContent = question.introduction;
       elements.questionLevel.textContent = levelNames[question.difficulty];
       elements.questionTitle.textContent = question.prompt;
       elements.questionCode.textContent = question.code;
@@ -2040,6 +2290,48 @@ const contador = ref(0);
       elements.quizHint.textContent = "Cuando estés listo, comprueba tu respuesta.";
     }
 
+    async function requestQuizAIHelp() {
+      if (!quizState?.current || aiRequestInProgress) return;
+      const question = quizState.current;
+      const isAnswered = quizState.checked;
+      const selectedAnswer = quizState.selected === null ? null : question.options[quizState.selected];
+      const questionCode = question.code ? `\nCódigo:\n${question.code}` : "";
+      const options = question.options.map((option, index) =>
+        `${String.fromCharCode(65 + index)}. ${option}`
+      ).join("\n");
+      const displayQuestion = isAnswered
+        ? `Explícame mi respuesta de ${question.topic} y ayúdame a aprender de ella.`
+        : `Dame una pista para pensar la pregunta de ${question.topic} sin decirme la respuesta.`;
+      const prompt = isAnswered
+        ? [
+          `Ayúdame a aprender de esta pregunta de ${question.topic}.`,
+          `Pregunta: ${question.prompt}${questionCode}`,
+          `Opciones:\n${options}`,
+          `Mi respuesta: ${selectedAnswer}`,
+          `Respuesta correcta: ${question.options[question.answer]}`,
+          `Explicación del quiz: ${question.explanation}`,
+          "Explícame por qué la respuesta correcta es adecuada, qué confusión puede causar mi respuesta y dame un ejemplo breve. Si respondí bien, refuerza el razonamiento."
+        ].join("\n\n")
+        : [
+          `Estoy resolviendo esta pregunta de ${question.topic}: ${question.prompt}${questionCode}`,
+          `Opciones:\n${options}`,
+          "Dame una pista conceptual y una pregunta guía para que pueda razonar; no reveles ni indiques directamente cuál opción es correcta."
+        ].join("\n\n");
+
+      setAIChatOpen(true);
+      const quizAIButton = document.getElementById("quizAIButton");
+      quizAIButton.disabled = true;
+      elements.answerButton.disabled = true;
+      quizAIButton.textContent = isAnswered ? "Preparando explicación…" : "Buscando una pista…";
+      try {
+        await askAI(prompt, displayQuestion);
+      } finally {
+        quizAIButton.disabled = false;
+        elements.answerButton.disabled = !quizState.checked && quizState.selected === null;
+        quizAIButton.textContent = quizState.checked ? "Entender mi respuesta con IA" : "Pedir pista a la IA";
+      }
+    }
+
     function checkAnswer() {
       if (quizState.selected === null || quizState.checked) return;
       const question = quizState.current;
@@ -2064,7 +2356,7 @@ const contador = ref(0);
         elements.feedback.className = "feedback good";
         elements.feedback.innerHTML = `<h3>¡Correcto! Vas por buen camino.</h3><p></p>`;
       } else {
-        quizState.difficulty = Math.max(1, quizState.difficulty - 1);
+        quizState.difficulty = Math.max(2, quizState.difficulty - 1);
         quizState.mistakes[question.topic] = (quizState.mistakes[question.topic] || 0) + 1;
         quizState.wrongAnswers.push({
           topic: question.topic,
@@ -2079,9 +2371,22 @@ const contador = ref(0);
       elements.feedback.querySelector("p").textContent = isCorrect
         ? question.explanation
         : `La respuesta correcta es «${question.options[question.answer]}». ${question.explanation}`;
+      if (Array.isArray(question.optionExplanations)) {
+        const analysisHeading = document.createElement("p");
+        analysisHeading.textContent = "Análisis de las opciones:";
+        const analysisList = document.createElement("ul");
+        analysisList.className = "option-analysis";
+        question.optionExplanations.forEach((explanation, index) => {
+          const item = document.createElement("li");
+          item.textContent = `${String.fromCharCode(65 + index)}. ${explanation}`;
+          analysisList.append(item);
+        });
+        elements.feedback.append(analysisHeading, analysisList);
+      }
       elements.feedback.hidden = false;
       elements.answerButton.disabled = false;
       elements.answerButton.textContent = quizState.answered >= quizState.total ? "Ver resultados" : "Siguiente pregunta";
+      document.getElementById("quizAIButton").textContent = "Entender mi respuesta con IA";
       elements.quizHint.textContent = isCorrect ? "La siguiente pregunta se ajustará a tu avance." : "El quiz ajustará el reto para ayudarte a practicar.";
 
       const progress = Math.round((quizState.answered / quizState.total) * 100);
@@ -2147,6 +2452,7 @@ const contador = ref(0);
 
     document.getElementById("startButton").addEventListener("click", () => startQuiz());
     elements.answerButton.addEventListener("click", advanceQuiz);
+    document.getElementById("quizAIButton").addEventListener("click", requestQuizAIHelp);
     document.getElementById("againButton").addEventListener("click", returnToIntro);
     document.getElementById("reinforceButton").addEventListener("click", () => startQuiz(null, true));
     document.getElementById("homeStartButton").addEventListener("click", () => setActivePage("quizzes"));
@@ -2178,6 +2484,19 @@ const contador = ref(0);
 
     const authForm = document.getElementById("authForm");
     const authNotice = document.getElementById("authNotice");
+    const passwordToggles = authForm.querySelectorAll(".password-toggle");
+    passwordToggles.forEach(button => {
+      button.addEventListener("click", () => {
+        const input = document.getElementById(button.dataset.togglePassword);
+        const isVisible = input.type === "password";
+        input.type = isVisible ? "text" : "password";
+        button.setAttribute("aria-pressed", String(isVisible));
+        const label = input.id === "authInviteCode"
+          ? "código de invitación"
+          : input.id === "authConfirmPassword" ? "confirmación de contraseña" : "contraseña";
+        button.setAttribute("aria-label", `${isVisible ? "Ocultar" : "Mostrar"} ${label}`);
+      });
+    });
     const authModeContent = {
       login: {
         title: "Inicia sesión",
@@ -2209,6 +2528,14 @@ const contador = ref(0);
 
     function setAuthMode(mode, message = "", isError = false) {
       const settings = authModeContent[mode];
+      passwordToggles.forEach(button => {
+        document.getElementById(button.dataset.togglePassword).type = "password";
+        button.setAttribute("aria-pressed", "false");
+        const label = button.dataset.togglePassword === "authInviteCode"
+          ? "código de invitación"
+          : button.dataset.togglePassword === "authConfirmPassword" ? "confirmación de contraseña" : "contraseña";
+        button.setAttribute("aria-label", `Mostrar ${label}`);
+      });
       document.getElementById("authTitle").textContent = settings.title;
       document.getElementById("authDescription").textContent = settings.description;
       document.getElementById("authSubmit").innerHTML = `${settings.submit} <span aria-hidden="true">→</span>`;
