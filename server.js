@@ -44,10 +44,13 @@ function loadLocalEnvironment() {
   const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
   for (const line of lines) {
     const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
-    if (!match || match[1] in process.env) continue;
+    if (!match) continue;
 
-    const value = match[2].replace(/^(['"])(.*)\1$/, "$2");
-    process.env[match[1]] = value;
+    const [, name, rawValue] = match;
+    if (process.env[name]?.trim()) continue;
+
+    const value = rawValue.replace(/^(['"])(.*)\1$/, "$2");
+    process.env[name] = value;
   }
 }
 
@@ -717,7 +720,7 @@ async function handleAuthRequest(request, response, pathname) {
     }
     const mail = emailTransport();
     if (!mail) {
-      sendJson(response, 503, { error: "La recuperación por correo aún no está configurada. El administrador debe completar los datos SMTP en .env." });
+      sendJson(response, 503, { error: "La recuperación por correo aún no está configurada. Completa SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD y SMTP_FROM. En Render, agrégalas en Environment; localmente, configúralas en .env y reinicia el servidor." });
       return;
     }
     const user = users.find(item => item.email === email);
