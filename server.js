@@ -927,7 +927,7 @@ async function handleAssistant(request, response) {
       },
       body: JSON.stringify({
         model: configuration.model,
-        ...(configuration.provider === "gemini" ? { reasoning_effort: "low" } : {}),
+        reasoning_effort: "low",
         temperature: 0.3,
         max_tokens: 700,
         messages: [
