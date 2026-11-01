@@ -21,7 +21,8 @@ const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 15;
 const STACKEXCHANGE_TIMEOUT_MS = 8_000;
 const STACKEXCHANGE_MAX_RESULTS = 3;
-const PROVIDER_UNAVAILABLE_RETRY_DELAY_MS = 700;
+const PROVIDER_UNAVAILABLE_MAX_RETRIES = 3;
+const PROVIDER_UNAVAILABLE_INITIAL_RETRY_DELAY_MS = 1_000;
 const AI_PROVIDER_TIMEOUT_MS = 80_000;
 const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 const PASSWORD_RESET_MAX_AGE_MS = 30 * 60 * 1000;
@@ -926,7 +927,7 @@ async function handleAssistant(request, response) {
       },
       body: JSON.stringify({
         model: configuration.model,
-        ...(configuration.provider === "gemini" ? { reasoning_effort: "low" } : {}),
+        reasoning_effort: "low",
         temperature: 0.3,
         max_tokens: 700,
         messages: [
@@ -939,8 +940,10 @@ async function handleAssistant(request, response) {
       signal: controller.signal
     });
     let upstream = await providerRequest();
-    if (upstream.status === 503) {
-      await new Promise(resolve => setTimeout(resolve, PROVIDER_UNAVAILABLE_RETRY_DELAY_MS));
+    for (let retry = 0; upstream.status === 503 && retry < PROVIDER_UNAVAILABLE_MAX_RETRIES; retry += 1) {
+      const backoffMs = PROVIDER_UNAVAILABLE_INITIAL_RETRY_DELAY_MS * (2 ** retry);
+      const jitterMs = Math.floor(Math.random() * 250);
+      await new Promise(resolve => setTimeout(resolve, backoffMs + jitterMs));
       upstream = await providerRequest();
     }
 
@@ -962,7 +965,7 @@ async function handleAssistant(request, response) {
       } else if (upstream.status === 429) {
         error = `${providerName} recibió la consulta, pero respondió HTTP 429. Se pudo alcanzar el límite de solicitudes, cuota o crédito disponible. Espera un momento y revisa los límites y el uso de la API en la consola del proveedor.`;
       } else if (upstream.status === 503) {
-        error = `${providerName} no pudo atender la consulta ahora (HTTP 503). El servicio o el modelo puede estar temporalmente sobrecargado. Espera un momento y vuelve a intentarlo; el servidor ya hizo un reintento automático. Si continúa, revisa el estado del proveedor y que el modelo ${configuration.model} esté disponible.${providerDetail ? ` Detalle: ${providerDetail}` : ""}`;
+        error = `${providerName} no pudo atender la consulta ahora (HTTP 503). El servicio o el modelo puede estar temporalmente sobrecargado. Espera un momento y vuelve a intentarlo; el servidor ya hizo ${PROVIDER_UNAVAILABLE_MAX_RETRIES} reintentos automáticos. Si continúa, revisa el estado del proveedor y que el modelo ${configuration.model} esté disponible.${providerDetail ? ` Detalle: ${providerDetail}` : ""}`;
       } else {
         error = `${providerName} respondió con error ${upstream.status}. Verifica la configuración del proveedor e inténtalo de nuevo.`;
       }
