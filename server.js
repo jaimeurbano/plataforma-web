@@ -821,34 +821,24 @@ function validatePayload(payload) {
 }
 
 function getProviderConfiguration() {
-  const provider = (process.env.AI_PROVIDER || "openai").trim().toLowerCase();
-  if (provider !== "openai" && provider !== "gemini") {
-    return { error: "AI_PROVIDER debe ser openai o gemini." };
-  }
-
-  const apiKey = provider === "gemini" ? process.env.GEMINI_API_KEY : process.env.AI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    const keyName = provider === "gemini" ? "GEMINI_API_KEY" : "AI_API_KEY";
     return {
-      error: `El asistente no está configurado: falta ${keyName} para ${provider}. Agrega una clave válida en .env y reinicia el servidor con npm.cmd start.`
+      error: "El asistente no está configurado: falta GEMINI_API_KEY. Agrega una clave válida de Gemini en .env y reinicia el servidor con npm.cmd start."
     };
   }
 
-  const defaultBaseUrl = provider === "gemini"
-    ? "https://generativelanguage.googleapis.com/v1beta/openai"
-    : "https://api.openai.com/v1";
-  const configuredBaseUrl = provider === "gemini"
-    ? process.env.GEMINI_BASE_URL
-    : process.env.AI_BASE_URL;
+  const defaultBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai";
+  const configuredBaseUrl = process.env.GEMINI_BASE_URL;
   const baseUrl = (configuredBaseUrl || defaultBaseUrl).trim().replace(/\/+$/, "");
   let parsedUrl;
   try {
     parsedUrl = new URL(baseUrl);
   } catch {
-    return { error: "AI_BASE_URL no es una URL válida." };
+    return { error: "GEMINI_BASE_URL no es una URL válida." };
   }
   if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
-    return { error: "AI_BASE_URL debe usar HTTPS o HTTP." };
+    return { error: "GEMINI_BASE_URL debe usar HTTPS o HTTP." };
   }
   parsedUrl.pathname = parsedUrl.pathname.replace(/\/+$/, "");
   if (!parsedUrl.pathname.endsWith("/chat/completions")) {
@@ -858,10 +848,7 @@ function getProviderConfiguration() {
   return {
     apiKey,
     endpoint: parsedUrl.toString(),
-    provider,
-    model: provider === "gemini"
-      ? process.env.GEMINI_MODEL || "gemini-3.5-flash-lite"
-      : process.env.AI_MODEL || "gpt-4o-mini"
+    model: process.env.GEMINI_MODEL || "gemini-3.8-flash"
   };
 }
 
@@ -958,7 +945,7 @@ async function handleAssistant(request, response) {
     }
 
     if (!upstream.ok) {
-      const providerName = configuration.provider === "gemini" ? "Gemini" : "OpenAI";
+      const providerName = "Gemini";
       console.error(`${providerName} respondió con HTTP ${upstream.status}.`);
       const providerDetail = upstream.status === 503
         ? await getSafeProviderErrorMessage(upstream, configuration.apiKey)
@@ -969,7 +956,7 @@ async function handleAssistant(request, response) {
       } else if (upstream.status === 405) {
         error = `${providerName} rechazó el método POST (HTTP 405). Comprueba que la URL sea la base de una API compatible con Chat Completions y que ningún proxy bloquee POST. Revisa .env y reinicia el servidor.`;
       } else if (upstream.status === 401) {
-        error = `${providerName} rechazó la credencial (HTTP 401). Comprueba que la clave configurada en .env corresponda al proveedor seleccionado en AI_PROVIDER y reinicia el servidor.`;
+        error = `${providerName} rechazó la credencial (HTTP 401). Comprueba que GEMINI_API_KEY sea una clave válida de Gemini y reinicia el servidor.`;
       } else if (upstream.status === 403) {
         error = `${providerName} rechazó el acceso (HTTP 403). Comprueba que la cuenta tenga acceso a la API y al modelo configurado, y que la clave tenga permisos suficientes.`;
       } else if (upstream.status === 429) {
@@ -1000,7 +987,7 @@ async function handleAssistant(request, response) {
     });
   } catch (error) {
     const timedOut = error.name === "AbortError";
-    const providerName = configuration.provider === "gemini" ? "Gemini" : "OpenAI";
+    const providerName = "Gemini";
     console.error(timedOut
       ? `La consulta a ${providerName} superó el límite de ${AI_PROVIDER_TIMEOUT_MS / 1000} segundos.`
       : `No se pudo conectar con ${providerName}.`);
