@@ -19,8 +19,8 @@ const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_ITEMS = 12;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 15;
-const STACKEXCHANGE_TIMEOUT_MS = 8_000;
-const STACKEXCHANGE_MAX_RESULTS = 3;
+const STACKEXCHANGE_TIMEOUT_MS = 3_000;
+const STACKEXCHANGE_MAX_RESULTS = 2;
 const PROVIDER_UNAVAILABLE_MAX_RETRIES = 3;
 const PROVIDER_UNAVAILABLE_INITIAL_RETRY_DELAY_MS = 1_000;
 const AI_PROVIDER_TIMEOUT_MS = 80_000;
@@ -44,10 +44,13 @@ function loadLocalEnvironment() {
   const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
   for (const line of lines) {
     const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
-    if (!match || match[1] in process.env) continue;
+    if (!match) continue;
 
-    const value = match[2].replace(/^(['"])(.*)\1$/, "$2");
-    process.env[match[1]] = value;
+    const [, name, rawValue] = match;
+    if (process.env[name]?.trim()) continue;
+
+    const value = rawValue.replace(/^(['"])(.*)\1$/, "$2");
+    process.env[name] = value;
   }
 }
 
@@ -717,7 +720,7 @@ async function handleAuthRequest(request, response, pathname) {
     }
     const mail = emailTransport();
     if (!mail) {
-      sendJson(response, 503, { error: "La recuperación por correo aún no está configurada. El administrador debe completar los datos SMTP en .env." });
+      sendJson(response, 503, { error: "La recuperación por correo aún no está configurada. Completa SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD y SMTP_FROM. En Render, agrégalas en Environment; localmente, configúralas en .env y reinicia el servidor." });
       return;
     }
     const user = users.find(item => item.email === email);
@@ -849,7 +852,7 @@ function getProviderConfiguration() {
   return {
     apiKey,
     endpoint: parsedUrl.toString(),
-    model: process.env.GEMINI_MODEL || "gemini-3.8-flash"
+    model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite"
   };
 }
 
@@ -897,12 +900,7 @@ async function handleAssistant(request, response) {
     console.error(timedOut
       ? "La búsqueda en Stack Exchange superó el tiempo límite."
       : `No se pudo consultar Stack Exchange: ${error.message}`);
-    sendJson(response, 502, {
-      error: timedOut
-        ? "La búsqueda de fuentes en línea tardó demasiado. Intenta de nuevo."
-        : "No se pudieron consultar las fuentes de programación en línea. Intenta de nuevo más tarde."
-    });
-    return;
+    onlineSources = [];
   }
 
   const sources = [...selectKnowledge(validated.message, validated.subject), ...onlineSources];
