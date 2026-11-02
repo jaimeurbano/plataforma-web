@@ -832,7 +832,7 @@ function getProviderConfiguration() {
     };
   }
 
-  const defaultBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai";
+  const defaultBaseUrl = "https://generativelanguage.googleapis.com/v1beta";
   const configuredBaseUrl = process.env.GEMINI_BASE_URL;
   const baseUrl = (configuredBaseUrl || defaultBaseUrl).trim().replace(/\/+$/, "");
   let parsedUrl;
@@ -845,13 +845,18 @@ function getProviderConfiguration() {
     return { error: "GEMINI_BASE_URL debe usar HTTPS o HTTP." };
   }
   parsedUrl.pathname = parsedUrl.pathname.replace(/\/+$/, "");
-  if (!parsedUrl.pathname.endsWith("/chat/completions")) {
-    parsedUrl.pathname = `${parsedUrl.pathname}/chat/completions`;
-  }
+  parsedUrl.pathname = parsedUrl.pathname.replace(/\/openai$/, "");
+  parsedUrl.search = "";
+  parsedUrl.hash = "";
+  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const endpoint = new URL(
+    `${parsedUrl.pathname}/models/${encodeURIComponent(model)}:generateContent`,
+    parsedUrl.origin
+  ).toString();
 
   return {
     apiKey,
-    endpoint: parsedUrl.toString(),
+    endpoint,
     model: process.env.GEMINI_MODEL || "gemini-3.8-flash"
   };
 }
@@ -920,18 +925,24 @@ async function handleAssistant(request, response) {
     const providerRequest = () => fetch(configuration.endpoint, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${configuration.apiKey}`,
+        "x-goog-api-key": configuration.apiKey,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: configuration.model,
-        reasoning_effort: "low",
-        max_tokens: 700,
-        messages: [
-          { role: "system", content: `${SYSTEM_PROMPT}\n\n${contextMessage}` },
-          ...validated.history,
-          { role: "user", content: validated.message }
-        ]
+        systemInstruction: {
+          parts: [{ text: `${SYSTEM_PROMPT}\n\n${contextMessage}` }]
+        },
+        contents: [
+          ...validated.history.map(item => ({
+            role: item.role === "assistant" ? "model" : "user",
+            parts: [{ text: item.content }]
+          })),
+          { role: "user", parts: [{ text: validated.message }] }
+        ],
+        generationConfig: {
+          maxOutputTokens: 700,
+          thinkingConfig: { thinkingLevel: "LOW" }
+        }
       }),
       signal: controller.signal
     });
@@ -972,10 +983,11 @@ async function handleAssistant(request, response) {
     }
 
     const result = await upstream.json();
-    const content = result?.choices?.[0]?.message?.content;
-    const reply = Array.isArray(content)
-      ? content.filter(part => part && part.type === "text").map(part => part.text).join("\n").trim()
-      : typeof content === "string" ? content.trim() : "";
+    const reply = result?.candidates?.[0]?.content?.parts
+      ?.filter(part => typeof part.text === "string" && part.thought !== true)
+      .map(part => part.text)
+      .join("\n")
+      .trim() || "";
     if (!reply) {
       console.error("El proveedor de IA devolvió una respuesta sin contenido de texto.");
       sendJson(response, 502, { error: "El proveedor de IA devolvió una respuesta vacía. Intenta de nuevo." });
