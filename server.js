@@ -928,8 +928,7 @@ async function handleAssistant(request, response) {
         reasoning_effort: "low",
         max_tokens: 700,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "system", content: contextMessage },
+          { role: "system", content: `${SYSTEM_PROMPT}\n\n${contextMessage}` },
           ...validated.history,
           { role: "user", content: validated.message }
         ]
