@@ -946,10 +946,10 @@ async function handleAssistant(request, response) {
 
     if (!upstream.ok) {
       const providerName = "Gemini";
-      console.error(`${providerName} respondió con HTTP ${upstream.status}.`);
       const providerDetail = upstream.status === 400 || upstream.status === 503
         ? await getSafeProviderErrorMessage(upstream, configuration.apiKey)
         : "";
+      console.error(`${providerName} respondió con HTTP ${upstream.status}.${providerDetail ? ` Detalle: ${providerDetail}` : ""}`);
       let error;
       if (upstream.status === 404) {
         error = `${providerName} respondió con error 404. Verifica que el modelo configurado exista y que la URL de la API sea correcta. Revisa la configuración en .env y reinicia el servidor.`;
