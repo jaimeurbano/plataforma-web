@@ -948,7 +948,7 @@ async function handleAssistant(request, response) {
     if (!upstream.ok) {
       const providerName = "Gemini";
       console.error(`${providerName} respondió con HTTP ${upstream.status}.`);
-      const providerDetail = upstream.status === 503
+      const providerDetail = upstream.status === 400 || upstream.status === 503
         ? await getSafeProviderErrorMessage(upstream, configuration.apiKey)
         : "";
       let error;
@@ -964,6 +964,8 @@ async function handleAssistant(request, response) {
         error = `${providerName} recibió la consulta, pero respondió HTTP 429. Se pudo alcanzar el límite de solicitudes, cuota o crédito disponible. Espera un momento y revisa los límites y el uso de la API en la consola del proveedor.`;
       } else if (upstream.status === 503) {
         error = `${providerName} no pudo atender la consulta ahora (HTTP 503). El servicio o el modelo puede estar temporalmente sobrecargado. Espera un momento y vuelve a intentarlo; el servidor ya hizo ${PROVIDER_UNAVAILABLE_MAX_RETRIES} reintentos automáticos. Si continúa, revisa el estado del proveedor y que el modelo ${configuration.model} esté disponible.${providerDetail ? ` Detalle: ${providerDetail}` : ""}`;
+      } else if (upstream.status === 400) {
+        error = `${providerName} rechazó la solicitud (HTTP 400). Revisa el modelo y los parámetros enviados.${providerDetail ? ` Detalle: ${providerDetail}` : ""}`;
       } else {
         error = `${providerName} respondió con error ${upstream.status}. Verifica la configuración del proveedor e inténtalo de nuevo.`;
       }
