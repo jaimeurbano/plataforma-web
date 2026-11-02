@@ -852,7 +852,7 @@ function getProviderConfiguration() {
   return {
     apiKey,
     endpoint: parsedUrl.toString(),
-    model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite"
+    model: process.env.GEMINI_MODEL || "gemini-3.8-flash"
   };
 }
 
