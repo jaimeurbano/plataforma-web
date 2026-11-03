@@ -797,15 +797,25 @@ function validatePayload(payload) {
   const currentQuestion = typeof payload.context?.currentQuestion === "string"
     ? payload.context.currentQuestion.slice(0, 500)
     : "";
-  const history = Array.isArray(payload.history)
-    ? payload.history.slice(-MAX_HISTORY_ITEMS).filter(item =>
-      item &&
-      (item.role === "user" || item.role === "assistant") &&
-      typeof item.content === "string" &&
-      item.content.trim() &&
-      item.content.length <= MAX_MESSAGE_LENGTH
-    ).map(item => ({ role: item.role, content: item.content.trim() }))
-    : [];
+  const history = [];
+  if (Array.isArray(payload.history)) {
+    for (const item of payload.history.slice(-MAX_HISTORY_ITEMS)) {
+      if (
+        !item ||
+        (item.role !== "user" && item.role !== "assistant") ||
+        typeof item.content !== "string" ||
+        !item.content.trim() ||
+        item.content.length > MAX_MESSAGE_LENGTH
+      ) {
+        continue;
+      }
+
+      const role = item.role;
+      if ((!history.length && role !== "user") || history.at(-1)?.role === role) continue;
+      history.push({ role, content: item.content.trim() });
+    }
+    if (history.at(-1)?.role === "user") history.pop();
+  }
 
   return {
     message: payload.message.trim(),
@@ -869,7 +879,7 @@ async function handleAssistant(request, response) {
   try {
     onlineSources = await searchProgrammingKnowledge(validated.message);
   } catch (error) {
-    const timedOut = error.name === "AbortError";
+    const timedOut = error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError");
     console.error(timedOut
       ? "La búsqueda en Stack Exchange superó el tiempo límite."
       : `No se pudo consultar Stack Exchange: ${error.message}`);
@@ -890,72 +900,28 @@ async function handleAssistant(request, response) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), AI_PROVIDER_TIMEOUT_MS);
   try {
-    const providerRequest = () => fetch(configuration.endpoint, {
-      method: "POST",
-      headers: {
-        "x-goog-api-key": configuration.apiKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: `${SYSTEM_PROMPT}\n\n${contextMessage}` }]
-        },
-        contents: [
-          ...validated.history.map(item => ({
-            role: item.role === "assistant" ? "model" : "user",
-            parts: [{ text: item.content }]
-          })),
-          { role: "user", parts: [{ text: validated.message }] }
-        ],
-        generationConfig: {
-          maxOutputTokens: 700,
-          thinkingConfig: { thinkingLevel: "LOW" }
-        }
-      }),
-      signal: controller.signal
+    const ai = new GoogleGenAI({
+      apiKey: configuration.apiKey,
+      httpOptions: { timeout: AI_PROVIDER_TIMEOUT_MS }
     });
-    let upstream = await providerRequest();
-    for (let retry = 0; upstream.status === 503 && retry < PROVIDER_UNAVAILABLE_MAX_RETRIES; retry += 1) {
-      const backoffMs = PROVIDER_UNAVAILABLE_INITIAL_RETRY_DELAY_MS * (2 ** retry);
-      const jitterMs = Math.floor(Math.random() * 250);
-      await new Promise(resolve => setTimeout(resolve, backoffMs + jitterMs));
-      upstream = await providerRequest();
-    }
-
-    if (!upstream.ok) {
-      const providerName = "Gemini";
-      const providerDetail = upstream.status === 400 || upstream.status === 503
-        ? await getSafeProviderErrorMessage(upstream, configuration.apiKey)
-        : "";
-      console.error(`${providerName} respondió con HTTP ${upstream.status}.${providerDetail ? ` Detalle: ${providerDetail}` : ""}`);
-      let error;
-      if (upstream.status === 404) {
-        error = `${providerName} respondió con error 404. Verifica que el modelo configurado exista y que la URL de la API sea correcta. Revisa la configuración en .env y reinicia el servidor.`;
-      } else if (upstream.status === 405) {
-        error = `${providerName} rechazó el método POST (HTTP 405). Comprueba que la URL sea la base de una API compatible con Chat Completions y que ningún proxy bloquee POST. Revisa .env y reinicia el servidor.`;
-      } else if (upstream.status === 401) {
-        error = `${providerName} rechazó la credencial (HTTP 401). Comprueba que GEMINI_API_KEY sea una clave válida de Gemini y reinicia el servidor.`;
-      } else if (upstream.status === 403) {
-        error = `${providerName} rechazó el acceso (HTTP 403). Comprueba que la cuenta tenga acceso a la API y al modelo configurado, y que la clave tenga permisos suficientes.`;
-      } else if (upstream.status === 429) {
-        error = `${providerName} recibió la consulta, pero respondió HTTP 429. Se pudo alcanzar el límite de solicitudes, cuota o crédito disponible. Espera un momento y revisa los límites y el uso de la API en la consola del proveedor.`;
-      } else if (upstream.status === 503) {
-        error = `${providerName} no pudo atender la consulta ahora (HTTP 503). El servicio o el modelo puede estar temporalmente sobrecargado. Espera un momento y vuelve a intentarlo; el servidor ya hizo ${PROVIDER_UNAVAILABLE_MAX_RETRIES} reintentos automáticos. Si continúa, revisa el estado del proveedor y que el modelo ${configuration.model} esté disponible.${providerDetail ? ` Detalle: ${providerDetail}` : ""}`;
-      } else if (upstream.status === 400) {
-        error = `${providerName} rechazó la solicitud (HTTP 400). Revisa el modelo y los parámetros enviados.${providerDetail ? ` Detalle: ${providerDetail}` : ""}`;
-      } else {
-        error = `${providerName} respondió con error ${upstream.status}. Verifica la configuración del proveedor e inténtalo de nuevo.`;
+    const systemInstruction = `${SYSTEM_PROMPT}\n\n${contextMessage}`;
+    const chat = ai.chats.create({
+      model: configuration.model,
+      history: validated.history.map(item => ({
+        role: item.role === "assistant" ? "model" : "user",
+        parts: [{ text: item.content }]
+      }))
+    });
+    const result = await chat.sendMessage({
+      message: validated.message,
+      config: {
+        systemInstruction,
+        maxOutputTokens: 700,
+        thinkingConfig: { thinkingLevel: "LOW" },
+        abortSignal: controller.signal
       }
-      sendJson(response, 502, { error });
-      return;
-    }
-
-    const result = await upstream.json();
-    const reply = result?.candidates?.[0]?.content?.parts
-      ?.filter(part => typeof part.text === "string" && part.thought !== true)
-      .map(part => part.text)
-      .join("\n")
-      .trim() || "";
+    });
+    const reply = typeof result.text === "string" ? result.text.trim() : "";
     if (!reply) {
       console.error("El proveedor de IA devolvió una respuesta sin contenido de texto.");
       sendJson(response, 502, { error: "El proveedor de IA devolvió una respuesta vacía. Intenta de nuevo." });
@@ -969,14 +935,26 @@ async function handleAssistant(request, response) {
   } catch (error) {
     const timedOut = error.name === "AbortError";
     const providerName = "Gemini";
-    console.error(timedOut
-      ? `La consulta a ${providerName} superó el límite de ${AI_PROVIDER_TIMEOUT_MS / 1000} segundos.`
-      : `No se pudo conectar con ${providerName}.`);
-    sendJson(response, 502, {
-      error: timedOut
-        ? `${providerName} tardó más de ${AI_PROVIDER_TIMEOUT_MS / 1000} segundos en responder. Espera un momento y prueba otra vez; si se repite, revisa la conexión y el estado del proveedor.`
-        : `No se pudo conectar con ${providerName}. Verifica la URL configurada y tu conexión a internet.`
-    });
+    const status = error instanceof ApiError ? error.status : null;
+    const providerDetail = getSafeProviderErrorMessage(error, configuration.apiKey);
+    console.error(`${providerName}${status ? ` respondió con HTTP ${status}` : ""}: ${providerDetail}`);
+    let message;
+    if (timedOut) {
+      message = `${providerName} tardó más de ${AI_PROVIDER_TIMEOUT_MS / 1000} segundos en responder. Prueba otra vez.`;
+    } else if (status === 400) {
+      message = `${providerName} rechazó la solicitud (HTTP 400): ${providerDetail}`;
+    } else if (status === 401 || status === 403) {
+      message = `${providerName} rechazó el acceso (HTTP ${status}). Revisa que GEMINI_API_KEY sea válida y que tu cuenta tenga acceso al modelo.`;
+    } else if (status === 404) {
+      message = `${providerName} no encontró el modelo "${configuration.model}". Revisa GEMINI_MODEL en Render.`;
+    } else if (status === 429) {
+      message = `${providerName} indicó que se alcanzó un límite de uso o cuota (HTTP 429). Revisa el uso y la cuota de la API.`;
+    } else if (status) {
+      message = `${providerName} respondió con HTTP ${status}: ${providerDetail}`;
+    } else {
+      message = `No se pudo conectar con ${providerName}: ${providerDetail}`;
+    }
+    sendJson(response, 502, { error: message });
   } finally {
     clearTimeout(timeout);
   }
