@@ -1242,7 +1242,11 @@ initializeStorage()
     });
   })
   .catch(async error => {
-    console.error(`No se pudo inicializar el almacenamiento: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    const code = error && typeof error === "object" && "code" in error
+      ? ` (código ${String(error.code)})`
+      : "";
+    console.error(`No se pudo inicializar el almacenamiento${code}: ${message || "Error sin mensaje."}`);
     if (database) await database.end();
     process.exitCode = 1;
   });
