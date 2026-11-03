@@ -7,6 +7,7 @@ const crypto = require("node:crypto");
 const tls = require("node:tls");
 const { promisify } = require("node:util");
 const nodemailer = require("nodemailer");
+const { ApiError, GoogleGenAI } = require("@google/genai");
 const { Pool } = require("pg");
 
 const ROOT = __dirname;
@@ -21,8 +22,6 @@ const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 15;
 const STACKEXCHANGE_TIMEOUT_MS = 3_000;
 const STACKEXCHANGE_MAX_RESULTS = 2;
-const PROVIDER_UNAVAILABLE_MAX_RETRIES = 3;
-const PROVIDER_UNAVAILABLE_INITIAL_RETRY_DELAY_MS = 1_000;
 const AI_PROVIDER_TIMEOUT_MS = 80_000;
 const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 const PASSWORD_RESET_MAX_AGE_MS = 30 * 60 * 1000;
@@ -318,16 +317,8 @@ async function searchProgrammingKnowledge(question) {
   }
 }
 
-async function getSafeProviderErrorMessage(response, apiKey) {
-  let body;
-  try {
-    body = await response.json();
-  } catch {
-    return "";
-  }
-
-  const message = body?.error?.message;
-  if (typeof message !== "string") return "";
+function getSafeProviderErrorMessage(error, apiKey) {
+  const message = error instanceof Error ? error.message : String(error);
   return message
     .replaceAll(apiKey, "[clave oculta]")
     .replace(/Bearer\s+\S+/gi, "Bearer [oculto]")
@@ -832,32 +823,9 @@ function getProviderConfiguration() {
     };
   }
 
-  const defaultBaseUrl = "https://generativelanguage.googleapis.com/v1beta";
-  const configuredBaseUrl = process.env.GEMINI_BASE_URL;
-  const baseUrl = (configuredBaseUrl || defaultBaseUrl).trim().replace(/\/+$/, "");
-  let parsedUrl;
-  try {
-    parsedUrl = new URL(baseUrl);
-  } catch {
-    return { error: "GEMINI_BASE_URL no es una URL válida." };
-  }
-  if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
-    return { error: "GEMINI_BASE_URL debe usar HTTPS o HTTP." };
-  }
-  parsedUrl.pathname = parsedUrl.pathname.replace(/\/+$/, "");
-  parsedUrl.pathname = parsedUrl.pathname.replace(/\/openai$/, "");
-  parsedUrl.search = "";
-  parsedUrl.hash = "";
-  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-  const endpoint = new URL(
-    `${parsedUrl.pathname}/models/${encodeURIComponent(model)}:generateContent`,
-    parsedUrl.origin
-  ).toString();
-
   return {
     apiKey,
-    endpoint,
-    model
+    model: process.env.GEMINI_MODEL || "gemini-3.8-flash"
   };
 }
 
