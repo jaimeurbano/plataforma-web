@@ -857,7 +857,7 @@ function getProviderConfiguration() {
   return {
     apiKey,
     endpoint,
-    model: process.env.GEMINI_MODEL || "gemini-3.8-flash"
+    model
   };
 }
 
